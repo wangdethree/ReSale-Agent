@@ -46,6 +46,8 @@ OPENAI_VISION_MODEL=gpt-4.1-mini
 
 模型返回内容会被 Pydantic 校验；如果接口失败或返回结构不合法，系统会自动回到本地降级识别，不影响后续手动确认和估价流程。
 
+后续版本规划见 [docs/roadmap.md](docs/roadmap.md)。V1 优先收口稳定演示，不做真实平台发布、支付、物流或复杂权限系统。
+
 ## 常用接口
 
 - `GET /health`：健康检查。
