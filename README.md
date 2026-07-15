@@ -1,0 +1,67 @@
+# ReSale Agent
+
+ReSale Agent 是一个 AI 二手物品出售助手 Demo。用户上传闲置物品图片并补充少量信息后，系统会完成商品识别、缺失信息追问、本地相似商品检索、规则估价、出售文案生成和模拟议价回复。
+
+V1 只支持三类商品：数码产品、图书、小家电。项目不会登录或操作真实二手平台，也不会承诺估价等于真实成交价。
+
+## 功能范围
+
+- FastAPI 后端接口与 Streamlit 前端演示。
+- SQLite 本地模拟商品库，初始化后包含 60 条模拟数据。
+- Agent 状态流转、缺失字段检查和执行轨迹记录。
+- 确定性规则估价，文本模型只作为未来增强入口。
+- 商品标题、描述、关键词、瑕疵说明、拍照建议和 Markdown 报告导出。
+- 模拟买家议价回复，保证不会主动低于用户最低接受价。
+- 图片识别服务带安全降级：没有模型密钥时返回可编辑的结构化初稿。
+
+## 快速启动
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+cp .env.example .env
+python -m backend.app.db.init_db
+uvicorn backend.app.main:app --reload
+```
+
+另开一个终端启动前端：
+
+```bash
+source .venv/bin/activate
+streamlit run frontend/app.py
+```
+
+默认后端地址是 `http://localhost:8000`，前端会读取 `RESALE_AGENT_API_BASE_URL`，未配置时使用 `http://localhost:8000/api/v1`。
+
+## 常用接口
+
+- `GET /health`：健康检查。
+- `POST /api/v1/sessions`：创建出售会话。
+- `POST /api/v1/sessions/{session_id}/images/analyze`：上传并分析图片。
+- `POST /api/v1/sessions/{session_id}/confirm`：确认或修改识别结果。
+- `GET /api/v1/sessions/{session_id}/questions/next`：获取下一条追问。
+- `POST /api/v1/sessions/{session_id}/answers`：提交补充信息。
+- `POST /api/v1/sessions/{session_id}/listing/generate`：生成出售方案。
+- `POST /api/v1/sessions/{session_id}/negotiation/reply`：生成模拟议价回复。
+- `GET /api/v1/sessions/{session_id}/export`：导出 Markdown 报告。
+
+## 测试
+
+```bash
+pytest
+```
+
+测试覆盖字段检查、估价规则、相似商品检索和一条完整 API 链路。测试数据库会放在临时目录，不会污染 `data/resale.db`。
+
+## 演示建议
+
+1. 选择“数码产品”，上传机械键盘图片。
+2. 确认识别结果并补充原价、购买时间、功能状态、维修记录和配件。
+3. 生成出售方案，查看相似商品、价格区间和 Markdown 报告。
+4. 输入“150 包邮行不行”，观察系统如何识别低价砍价并保护最低接受价。
+
+## 设计原则
+
+核心估价逻辑使用普通 Python 规则实现，便于测试和解释；模型输出必须经过结构化校验，且用户确认后的信息优先级高于模型识别结果。这样可以把 Demo 做成一条稳定、可讲清楚、可扩展的 Agent 工作流。
+
