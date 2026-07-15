@@ -1,0 +1,26 @@
+services:
+  backend:
+    image: python:3.11-slim
+    working_dir: /app
+    command: bash -lc "pip install -e . && python -m backend.app.db.init_db && uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      RESALE_AGENT_DB_PATH: /app/data/resale.db
+      RESALE_AGENT_UPLOAD_DIR: /app/uploads
+
+  frontend:
+    image: python:3.11-slim
+    working_dir: /app
+    command: bash -lc "pip install -e . && streamlit run frontend/app.py --server.address 0.0.0.0 --server.port 8501"
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      RESALE_AGENT_API_BASE_URL: http://backend:8000/api/v1
+    depends_on:
+      - backend
+
