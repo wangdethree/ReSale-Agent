@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
 import requests
+from dotenv import load_dotenv
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+env_file = Path(os.getenv("RESALE_AGENT_ENV_FILE", PROJECT_ROOT / ".env"))
+if env_file.exists():
+    load_dotenv(env_file, override=False)
 
 API_BASE_URL = os.getenv("RESALE_AGENT_API_BASE_URL", "http://localhost:8000/api/v1").rstrip("/")
 
@@ -79,4 +86,3 @@ class ApiClient:
         response = requests.get(f"{API_BASE_URL}/sessions/{session_id}/export", timeout=20)
         self._raise_for_status(response)
         return response.text
-
