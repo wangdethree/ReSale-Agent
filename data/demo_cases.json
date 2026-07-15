@@ -1,0 +1,70 @@
+[
+  {
+    "name": "Keychron K2 机械键盘",
+    "category": "digital",
+    "buyer_message": "150 包邮行不行",
+    "expected_title_keyword": "Keychron",
+    "product": {
+      "category": "digital",
+      "product_type": "mechanical_keyboard",
+      "brand": "Keychron",
+      "model": "K2",
+      "color": "gray",
+      "visible_condition": "轻微使用痕迹",
+      "visible_defects": ["空格键有轻微划痕"],
+      "vision_confidence": 0.86,
+      "original_price": 499,
+      "purchase_date": "2024-05",
+      "functional_status": "所有按键和蓝牙连接功能正常",
+      "repair_history": "无维修、无进水",
+      "accessories": ["原包装", "数据线", "拔键器"],
+      "additional_defects": ["无其他明显瑕疵"]
+    }
+  },
+  {
+    "name": "Python 图书套装",
+    "category": "book",
+    "buyer_message": "书里面笔记多吗？",
+    "expected_title_keyword": "Python",
+    "product": {
+      "category": "book",
+      "product_type": "python_book_set",
+      "brand": "人民邮电出版社",
+      "model": "Python 编程：从入门到实践 第3版",
+      "color": "blue",
+      "visible_condition": "轻微使用痕迹",
+      "visible_defects": ["封面边角有轻微折痕"],
+      "vision_confidence": 0.78,
+      "original_price": 159,
+      "purchase_date": "2024-03",
+      "set_status": "单本出售，不缺页",
+      "notes_status": "前两章有少量铅笔划线",
+      "damage_status": "无缺页，无明显污损",
+      "additional_defects": ["少量铅笔划线，已在描述中说明"]
+    }
+  },
+  {
+    "name": "美的桌面风扇",
+    "category": "appliance",
+    "buyer_message": "可以自提吗？",
+    "expected_title_keyword": "Midea",
+    "product": {
+      "category": "appliance",
+      "product_type": "desk_fan",
+      "brand": "Midea",
+      "model": "FT30-21M",
+      "color": "white",
+      "visible_condition": "轻微使用痕迹",
+      "visible_defects": ["底座有轻微划痕"],
+      "vision_confidence": 0.81,
+      "original_price": 169,
+      "purchase_date": "2024-06",
+      "functional_status": "三档风速和摇头功能正常",
+      "repair_history": "无维修",
+      "accessories": ["说明书"],
+      "additional_defects": ["底座轻微划痕，不影响使用"],
+      "delivery_options": "支持同城自提，也可以邮寄"
+    }
+  }
+]
+
