@@ -34,7 +34,10 @@ def create_tables(conn: Connection) -> None:
             source_name TEXT DEFAULT '内置模拟数据',
             source_type TEXT DEFAULT 'seed',
             source_url TEXT,
-            imported_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            imported_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            active BOOLEAN DEFAULT 1,
+            user_notes TEXT,
+            disabled_at DATETIME
         );
 
         CREATE TABLE IF NOT EXISTS negotiation_messages (
@@ -57,12 +60,16 @@ def migrate_reference_items(conn: Connection) -> None:
         "source_type": "ALTER TABLE reference_items ADD COLUMN source_type TEXT DEFAULT 'seed'",
         "source_url": "ALTER TABLE reference_items ADD COLUMN source_url TEXT",
         "imported_at": "ALTER TABLE reference_items ADD COLUMN imported_at DATETIME",
+        "active": "ALTER TABLE reference_items ADD COLUMN active BOOLEAN DEFAULT 1",
+        "user_notes": "ALTER TABLE reference_items ADD COLUMN user_notes TEXT",
+        "disabled_at": "ALTER TABLE reference_items ADD COLUMN disabled_at DATETIME",
     }
     for column, statement in migrations.items():
         if column not in columns:
             conn.execute(statement)
     conn.execute("UPDATE reference_items SET source_name = '内置模拟数据' WHERE source_name IS NULL")
     conn.execute("UPDATE reference_items SET source_type = 'seed' WHERE source_type IS NULL")
+    conn.execute("UPDATE reference_items SET active = 1 WHERE active IS NULL")
 
 
 def seed_reference_items(conn: Connection) -> None:

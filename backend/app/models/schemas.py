@@ -135,6 +135,11 @@ class MarketDataImportResponse(BaseModel):
     errors: list[MarketDataImportError] = Field(default_factory=list)
 
 
+class MarketDataSampleUpdateRequest(BaseModel):
+    active: bool | None = None
+    user_notes: str | None = None
+
+
 class MarketDataSampleItem(BaseModel):
     id: int
     category: Category
@@ -153,13 +158,18 @@ class MarketDataSampleItem(BaseModel):
     source_type: MarketSampleSourceType
     source_url: str | None = None
     imported_at: str | None = None
+    active: bool = True
+    user_notes: str | None = None
+    disabled_at: str | None = None
     deletable: bool = False
+    editable: bool = False
 
 
 class MarketDataListResponse(BaseModel):
     total_count: int
     by_source_type: dict[str, int]
     by_category: dict[str, int]
+    by_active: dict[str, int]
     items: list[MarketDataSampleItem]
 
 

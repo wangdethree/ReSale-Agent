@@ -161,15 +161,31 @@ with st.sidebar:
         format_func=lambda value: "全部来源" if not value else SOURCE_TYPE_LABELS[value],
         key="market_data_source_type",
     )
+    market_active = st.selectbox(
+        "样本状态",
+        ["", "active", "inactive"],
+        format_func=lambda value: "全部状态" if not value else {"active": "启用", "inactive": "停用"}[value],
+        key="market_data_active",
+    )
     try:
         market_samples = client.market_data_samples(
             category=market_category or None,
             source_type=market_source_type or None,
+            active={"active": True, "inactive": False}.get(market_active),
         )
-        import_payload, delete_sample_id = render_market_data_panel(market_samples)
+        import_payload, update_sample_payload, delete_sample_id = render_market_data_panel(market_samples)
         if import_payload:
             import_result = client.import_market_data_csv(import_payload["file"], import_payload["source_name"])
             render_market_data_import_result(import_result)
+        if update_sample_payload:
+            client.update_market_data_sample(
+                update_sample_payload["item_id"],
+                {
+                    "active": update_sample_payload["active"],
+                    "user_notes": update_sample_payload["user_notes"],
+                },
+            )
+            st.rerun()
         if delete_sample_id:
             client.delete_market_data_sample(delete_sample_id)
             st.rerun()

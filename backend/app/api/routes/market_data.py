@@ -3,7 +3,14 @@ from __future__ import annotations
 from fastapi import APIRouter, File, Form, Query, UploadFile
 
 from backend.app.core.exceptions import AppError
-from backend.app.models.schemas import Category, MarketDataImportResponse, MarketDataListResponse, MarketSampleSourceType
+from backend.app.models.schemas import (
+    Category,
+    MarketDataImportResponse,
+    MarketDataListResponse,
+    MarketDataSampleItem,
+    MarketDataSampleUpdateRequest,
+    MarketSampleSourceType,
+)
 from backend.app.repositories.product_repository import ProductRepository
 from backend.app.services.market_data_import_service import MarketDataImportService
 
@@ -17,6 +24,7 @@ def list_market_data_samples(
     category: Category | None = Query(default=None),
     source_type: MarketSampleSourceType | None = Query(default=None),
     source_name: str | None = Query(default=None),
+    active: bool | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
 ) -> MarketDataListResponse:
     return MarketDataListResponse(
@@ -24,6 +32,7 @@ def list_market_data_samples(
             category=category,
             source_type=source_type,
             source_name=source_name,
+            active=active,
             limit=limit,
         )
     )
@@ -44,6 +53,11 @@ async def import_market_data(
 
     result = MarketDataImportService().import_csv(content, source_name)
     return MarketDataImportResponse(**result)
+
+
+@router.patch("/samples/{item_id}", response_model=MarketDataSampleItem)
+def update_market_data_sample(item_id: int, payload: MarketDataSampleUpdateRequest) -> MarketDataSampleItem:
+    return MarketDataSampleItem(**repo.update_reference_item(item_id, payload.active, payload.user_notes))
 
 
 @router.delete("/samples/{item_id}", status_code=204)

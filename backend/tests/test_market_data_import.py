@@ -49,6 +49,8 @@ def test_market_data_import_feeds_local_similarity(monkeypatch, tmp_path) -> Non
         assert samples_json["by_source_type"] == {"imported": 1}
         imported_item = samples_json["items"][0]
         assert imported_item["deletable"] is True
+        assert imported_item["editable"] is True
+        assert imported_item["active"] is True
         assert imported_item["source_name"] == "测试授权表"
 
         seed_samples = client.get(
@@ -59,12 +61,50 @@ def test_market_data_import_feeds_local_similarity(monkeypatch, tmp_path) -> Non
         seed_item = seed_samples.json()["items"][0]
         forbidden_delete = client.delete(f"/api/v1/market-data/samples/{seed_item['id']}")
         assert forbidden_delete.status_code == 400
+        forbidden_update = client.patch(
+            f"/api/v1/market-data/samples/{seed_item['id']}",
+            json={"active": False, "user_notes": "不应修改内置样本"},
+        )
+        assert forbidden_update.status_code == 400
 
     results = search_similar_items("digital", "mechanical_keyboard", "Keychron", "K2", limit=1)
     assert results[0]["source_type"] == "imported"
     assert results[0]["source_name"] == "测试授权表"
     assert results[0]["sold_price"] == 420
     assert "用户导入样本" in results[0]["match_reasons"]
+
+    with TestClient(app) as client:
+        disabled = client.patch(
+            f"/api/v1/market-data/samples/{imported_item['id']}",
+            json={"active": False, "user_notes": "价格偏高，先停用"},
+        )
+        assert disabled.status_code == 200
+        disabled_json = disabled.json()
+        assert disabled_json["active"] is False
+        assert disabled_json["user_notes"] == "价格偏高，先停用"
+        assert disabled_json["disabled_at"] is not None
+
+        inactive_samples = client.get(
+            "/api/v1/market-data/samples",
+            params={"category": "digital", "source_type": "imported", "active": False},
+        )
+        assert inactive_samples.status_code == 200
+        assert inactive_samples.json()["total_count"] == 1
+
+    results_after_disable = search_similar_items("digital", "mechanical_keyboard", "Keychron", "K2", limit=1)
+    assert results_after_disable[0]["source_type"] == "seed"
+
+    with TestClient(app) as client:
+        restored = client.patch(
+            f"/api/v1/market-data/samples/{imported_item['id']}",
+            json={"active": True, "user_notes": "复核后恢复"},
+        )
+        assert restored.status_code == 200
+        assert restored.json()["active"] is True
+        assert restored.json()["disabled_at"] is None
+
+    results_after_restore = search_similar_items("digital", "mechanical_keyboard", "Keychron", "K2", limit=1)
+    assert results_after_restore[0]["source_type"] == "imported"
 
     with TestClient(app) as client:
         deleted = client.delete(f"/api/v1/market-data/samples/{imported_item['id']}")

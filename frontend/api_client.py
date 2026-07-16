@@ -120,13 +120,23 @@ class ApiClient:
         self._raise_for_status(response)
         return response.json()
 
-    def market_data_samples(self, category: str | None = None, source_type: str | None = None) -> dict[str, Any]:
+    def market_data_samples(
+        self,
+        category: str | None = None,
+        source_type: str | None = None,
+        active: bool | None = None,
+    ) -> dict[str, Any]:
         params = {
             key: value
-            for key, value in {"category": category, "source_type": source_type}.items()
-            if value
+            for key, value in {"category": category, "source_type": source_type, "active": active}.items()
+            if value is not None and value != ""
         }
         response = requests.get(f"{API_BASE_URL}/market-data/samples", params=params, timeout=15)
+        self._raise_for_status(response)
+        return response.json()
+
+    def update_market_data_sample(self, item_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        response = requests.patch(f"{API_BASE_URL}/market-data/samples/{item_id}", json=payload, timeout=15)
         self._raise_for_status(response)
         return response.json()
 
