@@ -31,6 +31,20 @@ class ApiClient:
         self._raise_for_status(response)
         return response.json()
 
+    def list_sessions(self) -> list[dict[str, Any]]:
+        response = requests.get(f"{API_BASE_URL}/sessions", timeout=15)
+        self._raise_for_status(response)
+        return response.json()
+
+    def get_session(self, session_id: str) -> dict[str, Any]:
+        response = requests.get(f"{API_BASE_URL}/sessions/{session_id}", timeout=15)
+        self._raise_for_status(response)
+        return response.json()
+
+    def delete_session(self, session_id: str) -> None:
+        response = requests.delete(f"{API_BASE_URL}/sessions/{session_id}", timeout=15)
+        self._raise_for_status(response)
+
     def analyze_images(self, session_id: str, files: list[Any]) -> dict[str, Any]:
         multipart = [
             ("files", (file.name, file.getvalue(), file.type or "image/jpeg"))

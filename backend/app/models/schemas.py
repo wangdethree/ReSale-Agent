@@ -18,6 +18,15 @@ class SaleStateResponse(BaseModel):
     state: dict[str, Any]
 
 
+class SessionSummary(BaseModel):
+    session_id: str
+    category: Category
+    current_step: str
+    product_label: str
+    created_at: str
+    updated_at: str
+
+
 class ProductConfirmation(BaseModel):
     category: Category
     product_type: str | None = None

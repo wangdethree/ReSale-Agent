@@ -52,7 +52,10 @@ OPENAI_TEXT_MODEL=gpt-4.1-mini
 ## 常用接口
 
 - `GET /health`：健康检查。
+- `GET /api/v1/sessions`：查看最近草稿。
 - `POST /api/v1/sessions`：创建出售会话。
+- `GET /api/v1/sessions/{session_id}`：恢复指定草稿。
+- `DELETE /api/v1/sessions/{session_id}`：删除指定草稿。
 - `POST /api/v1/sessions/{session_id}/images/analyze`：上传并分析图片。
 - `POST /api/v1/sessions/{session_id}/confirm`：确认或修改识别结果。
 - `GET /api/v1/sessions/{session_id}/questions/next`：获取下一条追问。

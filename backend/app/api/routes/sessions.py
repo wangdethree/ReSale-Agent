@@ -10,6 +10,7 @@ from backend.app.models.schemas import (
     NextQuestionResponse,
     SaleStateResponse,
     SessionCreate,
+    SessionSummary,
 )
 from backend.app.repositories.session_repository import SessionRepository
 from backend.app.tools.field_checker import get_question_for_field
@@ -26,10 +27,20 @@ def create_session(payload: SessionCreate) -> SaleStateResponse:
     return SaleStateResponse(session_id=state["session_id"], current_step=state["current_step"], state=state)
 
 
+@router.get("", response_model=list[SessionSummary])
+def list_sessions() -> list[SessionSummary]:
+    return [SessionSummary(**item) for item in repo.list_recent()]
+
+
 @router.get("/{session_id}", response_model=SaleStateResponse)
 def get_session(session_id: str) -> SaleStateResponse:
     state = repo.get(session_id)
     return SaleStateResponse(session_id=session_id, current_step=state["current_step"], state=state)
+
+
+@router.delete("/{session_id}", status_code=204)
+def delete_session(session_id: str) -> None:
+    repo.delete(session_id)
 
 
 @router.post("/{session_id}/confirm", response_model=SaleStateResponse)
@@ -96,4 +107,3 @@ def submit_answer(session_id: str, payload: AnswerRequest) -> NextQuestionRespon
         question=state.get("current_question") or get_question_for_field(next_field),
         missing_fields=missing,
     )
-

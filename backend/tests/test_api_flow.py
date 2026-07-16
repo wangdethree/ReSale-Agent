@@ -62,3 +62,12 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert exported.status_code == 200
         assert "# 闲置 Keychron K2" in exported.text
         assert "## 估价拆解" in exported.text
+
+        sessions = client.get("/api/v1/sessions")
+        assert sessions.status_code == 200
+        summaries = sessions.json()
+        assert any(item["session_id"] == session_id and "Keychron" in item["product_label"] for item in summaries)
+
+        deleted = client.delete(f"/api/v1/sessions/{session_id}")
+        assert deleted.status_code == 204
+        assert client.get(f"/api/v1/sessions/{session_id}").status_code == 404
