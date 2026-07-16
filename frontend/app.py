@@ -1,6 +1,15 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import streamlit as st
+
+
+# Streamlit 直跑 frontend/app.py 时会优先使用脚本目录，这里补上项目根目录以便加载 frontend 包。
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from frontend.api_client import ApiClient
 from frontend.components.confirmation_form import render_confirmation_form
@@ -114,4 +123,3 @@ st.divider()
 st.caption(
     f"支持类别：{', '.join(CATEGORY_OPTIONS.values())}。当前版本使用本地模拟数据，不代表真实平台成交价。"
 )
-
