@@ -37,6 +37,11 @@ class SessionRepository:
             "keywords": [],
             "photo_suggestions": [],
             "platform_copies": [],
+            "inventory_status": "draft",
+            "storage_location": None,
+            "inventory_notes": None,
+            "listing_performance": None,
+            "reprice_suggestion": None,
             "sale_outcome": None,
             "errors": [],
             "trace": [],
@@ -103,11 +108,62 @@ class SessionRepository:
                     "category": row["category"],
                     "current_step": row["current_step"],
                     "product_label": self._product_label(state),
+                    "inventory_status": self._inventory_status(state),
                     "created_at": row["created_at"],
                     "updated_at": row["updated_at"],
                 }
             )
         return summaries
+
+    def inventory_summary(
+        self,
+        category: str | None = None,
+        inventory_status: str | None = None,
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        with get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, category, state_json, updated_at
+                FROM sale_sessions
+                ORDER BY updated_at DESC
+                """,
+            ).fetchall()
+
+        items: list[dict[str, Any]] = []
+        for row in rows:
+            state = json.loads(row["state_json"])
+            status = self._inventory_status(state)
+            if category and row["category"] != category:
+                continue
+            if inventory_status and status != inventory_status:
+                continue
+            performance = state.get("listing_performance") or {}
+            suggestion = state.get("reprice_suggestion") or {}
+            items.append(
+                {
+                    "session_id": row["id"],
+                    "category": row["category"],
+                    "category_label": CATEGORY_LABELS.get(row["category"], row["category"]),
+                    "product_label": self._product_label(state),
+                    "inventory_status": status,
+                    "listing_price": state.get("listing_price"),
+                    "suggested_floor_price": state.get("suggested_floor_price"),
+                    "days_listed": performance.get("days_listed"),
+                    "view_count": performance.get("view_count"),
+                    "favorite_count": performance.get("favorite_count"),
+                    "inquiry_count": performance.get("inquiry_count"),
+                    "next_action": suggestion.get("next_action"),
+                    "updated_at": row["updated_at"],
+                }
+            )
+
+        visible_items = items[:limit]
+        by_status: dict[str, int] = {}
+        for item in items:
+            status = item["inventory_status"]
+            by_status[status] = by_status.get(status, 0) + 1
+        return {"total_count": len(items), "by_status": by_status, "items": visible_items}
 
     def outcome_summary(
         self,
@@ -193,6 +249,11 @@ class SessionRepository:
         ]
         label = " ".join(part for part in parts if part).strip()
         return label[:60] if label else "未命名草稿"
+
+    def _inventory_status(self, state: dict[str, Any]) -> str:
+        if state.get("sale_outcome"):
+            return "sold"
+        return state.get("inventory_status") or ("ready" if state.get("listing_price") else "draft")
 
     def _summarize_outcomes_by_category(self, outcomes: list[dict[str, Any]]) -> list[dict[str, Any]]:
         summaries: list[dict[str, Any]] = []

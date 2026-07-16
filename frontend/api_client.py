@@ -50,6 +50,20 @@ class ApiClient:
         self._raise_for_status(response)
         return response.json()
 
+    def inventory_summary(self, category: str | None = None, inventory_status: str | None = None) -> dict[str, Any]:
+        params = {
+            key: value
+            for key, value in {"category": category, "inventory_status": inventory_status}.items()
+            if value
+        }
+        response = requests.get(
+            f"{API_BASE_URL}/sessions/inventory/summary",
+            params=params,
+            timeout=15,
+        )
+        self._raise_for_status(response)
+        return response.json()
+
     def get_session(self, session_id: str) -> dict[str, Any]:
         response = requests.get(f"{API_BASE_URL}/sessions/{session_id}", timeout=15)
         self._raise_for_status(response)
@@ -72,6 +86,27 @@ class ApiClient:
             "sale_notes": sale_notes,
         }
         response = requests.post(f"{API_BASE_URL}/sessions/{session_id}/outcome", json=payload, timeout=15)
+        self._raise_for_status(response)
+        return response.json()
+
+    def update_inventory(
+        self,
+        session_id: str,
+        inventory_status: str,
+        storage_location: str,
+        inventory_notes: str,
+    ) -> dict[str, Any]:
+        payload = {
+            "inventory_status": inventory_status,
+            "storage_location": storage_location,
+            "inventory_notes": inventory_notes,
+        }
+        response = requests.post(f"{API_BASE_URL}/sessions/{session_id}/inventory", json=payload, timeout=15)
+        self._raise_for_status(response)
+        return response.json()
+
+    def record_listing_performance(self, session_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        response = requests.post(f"{API_BASE_URL}/sessions/{session_id}/performance", json=payload, timeout=15)
         self._raise_for_status(response)
         return response.json()
 

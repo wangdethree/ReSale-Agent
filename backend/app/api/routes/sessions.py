@@ -8,6 +8,10 @@ from backend.app.models.schemas import (
     AnswerRequest,
     Category,
     ConfirmRequest,
+    InventoryStatus,
+    InventorySummaryResponse,
+    InventoryUpdateRequest,
+    ListingPerformanceRequest,
     NextQuestionResponse,
     OutcomeSummaryResponse,
     SaleOutcomeRequest,
@@ -16,6 +20,7 @@ from backend.app.models.schemas import (
     SessionSummary,
 )
 from backend.app.repositories.session_repository import SessionRepository
+from backend.app.services.inventory_service import InventoryService
 from backend.app.services.outcome_service import OutcomeService
 from backend.app.tools.field_checker import get_question_for_field
 
@@ -46,6 +51,16 @@ def get_outcome_summary(
     )
 
 
+@router.get("/inventory/summary", response_model=InventorySummaryResponse)
+def get_inventory_summary(
+    category: Category | None = Query(default=None),
+    inventory_status: InventoryStatus | None = Query(default=None),
+) -> InventorySummaryResponse:
+    return InventorySummaryResponse(
+        **repo.inventory_summary(category=category, inventory_status=inventory_status)
+    )
+
+
 @router.get("/{session_id}", response_model=SaleStateResponse)
 def get_session(session_id: str) -> SaleStateResponse:
     state = repo.get(session_id)
@@ -61,6 +76,34 @@ def delete_session(session_id: str) -> None:
 def record_sale_outcome(session_id: str, payload: SaleOutcomeRequest) -> SaleStateResponse:
     state = repo.get(session_id)
     OutcomeService().record(state, payload.final_sold_price, payload.sold_channel, payload.sale_notes)
+    repo.save(state)
+    return SaleStateResponse(session_id=session_id, current_step=state["current_step"], state=state)
+
+
+@router.post("/{session_id}/inventory", response_model=SaleStateResponse)
+def update_inventory(session_id: str, payload: InventoryUpdateRequest) -> SaleStateResponse:
+    state = repo.get(session_id)
+    InventoryService().update_status(
+        state,
+        payload.inventory_status,
+        payload.storage_location,
+        payload.inventory_notes,
+    )
+    repo.save(state)
+    return SaleStateResponse(session_id=session_id, current_step=state["current_step"], state=state)
+
+
+@router.post("/{session_id}/performance", response_model=SaleStateResponse)
+def record_listing_performance(session_id: str, payload: ListingPerformanceRequest) -> SaleStateResponse:
+    state = repo.get(session_id)
+    InventoryService().record_performance(
+        state,
+        days_listed=payload.days_listed,
+        view_count=payload.view_count,
+        favorite_count=payload.favorite_count,
+        inquiry_count=payload.inquiry_count,
+        current_listing_price=payload.current_listing_price,
+    )
     repo.save(state)
     return SaleStateResponse(session_id=session_id, current_step=state["current_step"], state=state)
 

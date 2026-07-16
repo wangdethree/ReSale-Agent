@@ -55,8 +55,42 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert checklist
         assert {item["status"] for item in checklist} <= {"done", "review", "todo"}
         assert any(item["item_id"] == "price" and item["status"] == "done" for item in checklist)
-
+        assert listing_json["inventory_status"] == "ready"
         floor = listing_json["price"]["suggested_floor_price"]
+
+        inventory_update = client.post(
+            f"/api/v1/sessions/{session_id}/inventory",
+            json={
+                "inventory_status": "listed",
+                "storage_location": "书房置物架",
+                "inventory_notes": "已清洁，待买家确认",
+            },
+        )
+        assert inventory_update.status_code == 200
+        inventory_state = inventory_update.json()["state"]
+        assert inventory_state["inventory_status"] == "listed"
+        assert inventory_state["storage_location"] == "书房置物架"
+
+        performance = client.post(
+            f"/api/v1/sessions/{session_id}/performance",
+            json={
+                "days_listed": 5,
+                "view_count": 120,
+                "favorite_count": 1,
+                "inquiry_count": 0,
+                "current_listing_price": listing_json["price"]["listing_price"],
+            },
+        )
+        assert performance.status_code == 200
+        performance_state = performance.json()["state"]
+        assert performance_state["listing_performance"]["view_count"] == 120
+        assert performance_state["reprice_suggestion"]["recommended_listing_price"] >= floor
+        assert performance_state["reprice_suggestion"]["next_action"] in {"降价 5%", "小幅降价 3%", "保持价格", "优化展示", "继续观察"}
+
+        inventory_summary = client.get("/api/v1/sessions/inventory/summary", params={"inventory_status": "listed"})
+        assert inventory_summary.status_code == 200
+        assert inventory_summary.json()["total_count"] == 1
+
         negotiation = client.post(
             f"/api/v1/sessions/{session_id}/negotiation/reply",
             json={"buyer_message": "150 包邮行不行", "user_floor_price": floor},
@@ -75,6 +109,7 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert sale_outcome["sold_channel"] == "闲鱼"
         assert sale_outcome["price_position"] == "符合估价区间"
         assert sale_outcome["price_delta_from_mid"] != 0
+        assert outcome.json()["state"]["inventory_status"] == "sold"
 
         outcome_summary = client.get("/api/v1/sessions/outcomes/summary")
         assert outcome_summary.status_code == 200

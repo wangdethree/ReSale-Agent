@@ -100,6 +100,11 @@ def _listing_from_state(state: dict[str, Any]) -> dict[str, Any] | None:
         "photo_suggestions": state.get("photo_suggestions", []),
         "platform_copies": state.get("platform_copies", []),
         "publish_checklist": state.get("publish_checklist", []),
+        "inventory_status": state.get("inventory_status", "ready"),
+        "storage_location": state.get("storage_location"),
+        "inventory_notes": state.get("inventory_notes"),
+        "listing_performance": state.get("listing_performance"),
+        "reprice_suggestion": state.get("reprice_suggestion"),
         "sale_outcome": state.get("sale_outcome"),
         "trace": state.get("trace", []),
     }

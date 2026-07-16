@@ -14,6 +14,7 @@ class ExportService:
         photo_lines = [f"- {item}" for item in state.get("photo_suggestions", [])]
         platform_lines = self._build_platform_lines(state.get("platform_copies", []))
         checklist_lines = self._build_checklist_lines(state.get("publish_checklist", []))
+        inventory_lines = self._build_inventory_lines(state)
         outcome_lines = self._build_outcome_lines(state.get("sale_outcome"))
         keyword_text = "、".join(state.get("keywords", []))
 
@@ -44,6 +45,9 @@ class ExportService:
                 "",
                 "## 发布前检查",
                 *(checklist_lines or ["- 尚未生成发布前检查清单。"]),
+                "",
+                "## 库存和发布表现",
+                *(inventory_lines or ["- 暂无库存或发布表现记录。"]),
                 "",
                 "## 成交反馈",
                 *(outcome_lines or ["- 尚未记录成交反馈。"]),
@@ -144,6 +148,33 @@ class ExportService:
             )
             for item in checklist
         ]
+
+    def _build_inventory_lines(self, state: dict[str, Any]) -> list[str]:
+        status_labels = {"draft": "草稿", "ready": "待发布", "listed": "已发布", "sold": "已成交", "archived": "已归档"}
+        status = state.get("inventory_status")
+        lines = [f"- 库存状态：{status_labels.get(status, status or '未记录')}"]
+        if state.get("storage_location"):
+            lines.append(f"- 存放位置：{state.get('storage_location')}")
+        if state.get("inventory_notes"):
+            lines.append(f"- 库存备注：{state.get('inventory_notes')}")
+        performance = state.get("listing_performance") or {}
+        if performance:
+            lines.append(
+                "- 发布表现："
+                f"{performance.get('days_listed', 0)} 天，"
+                f"浏览 {performance.get('view_count', 0)}，"
+                f"收藏 {performance.get('favorite_count', 0)}，"
+                f"咨询 {performance.get('inquiry_count', 0)}。"
+            )
+        suggestion = state.get("reprice_suggestion") or {}
+        if suggestion:
+            lines.append(
+                "- 调价建议："
+                f"{suggestion.get('next_action', '暂无')}，"
+                f"建议挂牌 {float(suggestion.get('recommended_listing_price', 0)):.0f} 元；"
+                f"{suggestion.get('reason', '')}"
+            )
+        return lines
 
     def _build_outcome_lines(self, outcome: dict[str, Any] | None) -> list[str]:
         if not outcome:

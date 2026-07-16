@@ -31,6 +31,7 @@ class OutcomeService:
             "price_position": self._price_position(final_price, deal_min, deal_max),
         }
         state["current_step"] = "sold_feedback"
+        state["inventory_status"] = "sold"
         return state
 
     def _price_position(self, final_price: float, deal_min: float | None, deal_max: float | None) -> str:

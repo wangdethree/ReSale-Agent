@@ -136,6 +136,8 @@ def generate_listing_node(state: dict[str, Any]) -> dict[str, Any]:
     def work() -> None:
         listing = ListingService().generate(state)
         state.update(listing)
+        if state.get("inventory_status") in {None, "draft"}:
+            state["inventory_status"] = "ready"
         state["current_step"] = "listing_ready"
 
     return _run_node(state, "generate_listing", True, work)

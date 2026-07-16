@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 Category = Literal["digital", "book", "appliance", "clothing", "furniture", "shoe_bag"]
+InventoryStatus = Literal["draft", "ready", "listed", "sold", "archived"]
 
 
 class SessionCreate(BaseModel):
@@ -23,6 +24,7 @@ class SessionSummary(BaseModel):
     category: Category
     current_step: str
     product_label: str
+    inventory_status: InventoryStatus = "draft"
     created_at: str
     updated_at: str
 
@@ -79,6 +81,42 @@ class SaleOutcomeRequest(BaseModel):
     final_sold_price: float = Field(ge=0)
     sold_channel: str | None = None
     sale_notes: str | None = None
+
+
+class InventoryUpdateRequest(BaseModel):
+    inventory_status: InventoryStatus
+    storage_location: str | None = None
+    inventory_notes: str | None = None
+
+
+class ListingPerformanceRequest(BaseModel):
+    days_listed: int = Field(ge=0)
+    view_count: int = Field(ge=0)
+    favorite_count: int = Field(ge=0)
+    inquiry_count: int = Field(ge=0)
+    current_listing_price: float | None = Field(default=None, ge=0)
+
+
+class InventorySummaryItem(BaseModel):
+    session_id: str
+    category: Category
+    category_label: str
+    product_label: str
+    inventory_status: InventoryStatus
+    listing_price: float | None = None
+    suggested_floor_price: float | None = None
+    days_listed: int | None = None
+    view_count: int | None = None
+    favorite_count: int | None = None
+    inquiry_count: int | None = None
+    next_action: str | None = None
+    updated_at: str
+
+
+class InventorySummaryResponse(BaseModel):
+    total_count: int
+    by_status: dict[str, int]
+    items: list[InventorySummaryItem]
 
 
 class OutcomeSummaryItem(BaseModel):
@@ -170,6 +208,11 @@ class ListingResponse(BaseModel):
     photo_suggestions: list[str]
     platform_copies: list[PlatformCopy]
     publish_checklist: list[PublishChecklistItem] = Field(default_factory=list)
+    inventory_status: InventoryStatus = "ready"
+    storage_location: str | None = None
+    inventory_notes: str | None = None
+    listing_performance: dict[str, Any] | None = None
+    reprice_suggestion: dict[str, Any] | None = None
     sale_outcome: dict[str, Any] | None = None
     trace: list[dict[str, Any]]
 

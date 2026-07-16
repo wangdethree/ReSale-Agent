@@ -38,6 +38,11 @@ def generate_listing(session_id: str) -> ListingResponse:
         photo_suggestions=state["photo_suggestions"],
         platform_copies=[PlatformCopy(**item) for item in state.get("platform_copies", [])],
         publish_checklist=[PublishChecklistItem(**item) for item in state.get("publish_checklist", [])],
+        inventory_status=state.get("inventory_status", "ready"),
+        storage_location=state.get("storage_location"),
+        inventory_notes=state.get("inventory_notes"),
+        listing_performance=state.get("listing_performance"),
+        reprice_suggestion=state.get("reprice_suggestion"),
         sale_outcome=state.get("sale_outcome"),
         trace=state.get("trace", []),
     )

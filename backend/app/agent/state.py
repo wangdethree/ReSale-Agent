@@ -57,6 +57,11 @@ class SaleAgentState(TypedDict, total=False):
     photo_suggestions: list[str]
     platform_copies: list[dict[str, Any]]
     publish_checklist: list[dict[str, Any]]
+    inventory_status: Literal["draft", "ready", "listed", "sold", "archived"]
+    storage_location: str | None
+    inventory_notes: str | None
+    listing_performance: dict[str, Any] | None
+    reprice_suggestion: dict[str, Any] | None
     sale_outcome: dict[str, Any] | None
 
     buyer_message: str | None

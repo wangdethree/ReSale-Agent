@@ -13,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from frontend.api_client import ApiClient
 from frontend.components.confirmation_form import render_confirmation_form
+from frontend.components.inventory_panel import INVENTORY_STATUS_LABELS, render_inventory_panel, render_inventory_summary
 from frontend.components.negotiation_panel import render_negotiation_panel, render_negotiation_result
 from frontend.components.outcome_panel import CHANNEL_OPTIONS, render_outcome_panel
 from frontend.components.outcome_summary import render_outcome_summary
@@ -36,6 +37,20 @@ def _sync_state(response: dict) -> None:
     st.session_state.state = response.get("state", st.session_state.state)
 
 
+def _sync_listing_from_state(state: dict) -> None:
+    if not st.session_state.listing:
+        return
+    for key in [
+        "inventory_status",
+        "storage_location",
+        "inventory_notes",
+        "listing_performance",
+        "reprice_suggestion",
+        "sale_outcome",
+    ]:
+        st.session_state.listing[key] = state.get(key)
+
+
 def _draft_label(draft: dict) -> str:
     category = CATEGORY_OPTIONS.get(draft.get("category"), draft.get("category", "未知类别"))
     product = draft.get("product_label") or "未命名草稿"
@@ -44,7 +59,7 @@ def _draft_label(draft: dict) -> str:
 
 
 st.title("ReSale Agent")
-st.caption("AI 二手物品出售助手 · V2 Demo")
+st.caption("AI 二手物品出售助手 · V3 本地库存闭环 Demo")
 
 with st.sidebar:
     st.write("当前会话")
@@ -113,6 +128,24 @@ with st.sidebar:
     except RuntimeError as exc:
         st.caption(f"成交复盘暂不可用：{exc}")
 
+    st.divider()
+    st.write("库存管理")
+    inventory_status = st.selectbox(
+        "库存状态",
+        ["", *INVENTORY_STATUS_LABELS.keys()],
+        format_func=lambda value: "全部状态" if not value else INVENTORY_STATUS_LABELS[value],
+        key="inventory_summary_status",
+    )
+    try:
+        render_inventory_summary(
+            client.inventory_summary(
+                category=summary_category or None,
+                inventory_status=inventory_status or None,
+            )
+        )
+    except RuntimeError as exc:
+        st.caption(f"库存总览暂不可用：{exc}")
+
 
 try:
     if st.session_state.current_view == "开始出售":
@@ -163,11 +196,22 @@ try:
                 st.info("信息补充完整后再生成出售方案。")
         else:
             render_listing(st.session_state.listing)
+            inventory_payload, performance_payload = render_inventory_panel(st.session_state.listing)
+            if inventory_payload:
+                response = client.update_inventory(st.session_state.session_id, **inventory_payload)
+                _sync_state(response)
+                _sync_listing_from_state(response["state"])
+                st.rerun()
+            if performance_payload:
+                response = client.record_listing_performance(st.session_state.session_id, performance_payload)
+                _sync_state(response)
+                _sync_listing_from_state(response["state"])
+                st.rerun()
             outcome_payload = render_outcome_panel(st.session_state.listing)
             if outcome_payload:
                 response = client.record_sale_outcome(st.session_state.session_id, **outcome_payload)
                 _sync_state(response)
-                st.session_state.listing["sale_outcome"] = response["state"].get("sale_outcome")
+                _sync_listing_from_state(response["state"])
                 st.rerun()
             markdown = client.export_markdown(st.session_state.session_id)
             st.download_button("下载 Markdown 报告", markdown, file_name="resale-agent-report.md")
