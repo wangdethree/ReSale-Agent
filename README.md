@@ -56,7 +56,7 @@ OPENAI_TEXT_MODEL=gpt-4.1-mini
 
 模型返回内容会被结构化校验；如果接口失败或返回结构不合法，图片识别、文案生成和议价回复都会自动回到本地降级模板，不影响后续手动确认和估价流程。
 
-当前 V1 验收记录见 [docs/v1-acceptance.md](docs/v1-acceptance.md)，后续版本规划见 [docs/roadmap.md](docs/roadmap.md)，项目面试问答见 [docs/interview-qa.md](docs/interview-qa.md)。V1 优先收口稳定演示，不做真实平台发布、支付、物流或复杂权限系统。
+当前 V1 验收记录见 [docs/v1-acceptance.md](docs/v1-acceptance.md)，后续版本规划见 [docs/roadmap.md](docs/roadmap.md)，后续开发方向见 [docs/next-development-plan.md](docs/next-development-plan.md)，项目面试问答见 [docs/interview-qa.md](docs/interview-qa.md)。V1 优先收口稳定演示，不做真实平台发布、支付、物流或复杂权限系统。
 
 ## 常用接口
 
