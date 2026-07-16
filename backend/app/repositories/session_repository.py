@@ -106,7 +106,12 @@ class SessionRepository:
             )
         return summaries
 
-    def outcome_summary(self, recent_limit: int = 8) -> dict[str, Any]:
+    def outcome_summary(
+        self,
+        recent_limit: int = 8,
+        category: str | None = None,
+        sold_channel: str | None = None,
+    ) -> dict[str, Any]:
         with get_connection() as conn:
             rows = conn.execute(
                 """
@@ -121,6 +126,10 @@ class SessionRepository:
             state = json.loads(row["state_json"])
             outcome = state.get("sale_outcome")
             if not outcome:
+                continue
+            if category and row["category"] != category:
+                continue
+            if sold_channel and (outcome.get("sold_channel") or "未填写") != sold_channel:
                 continue
             outcomes.append(
                 {

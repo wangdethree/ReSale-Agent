@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from backend.app.agent.graph import ReSaleAgentGraph
 from backend.app.agent.nodes import confirm_product_node
 from backend.app.models.schemas import (
     AnswerRequest,
+    Category,
     ConfirmRequest,
     NextQuestionResponse,
     OutcomeSummaryResponse,
@@ -36,8 +37,13 @@ def list_sessions() -> list[SessionSummary]:
 
 
 @router.get("/outcomes/summary", response_model=OutcomeSummaryResponse)
-def get_outcome_summary() -> OutcomeSummaryResponse:
-    return OutcomeSummaryResponse(**repo.outcome_summary())
+def get_outcome_summary(
+    category: Category | None = Query(default=None),
+    sold_channel: str | None = Query(default=None),
+) -> OutcomeSummaryResponse:
+    return OutcomeSummaryResponse(
+        **repo.outcome_summary(category=category, sold_channel=sold_channel)
+    )
 
 
 @router.get("/{session_id}", response_model=SaleStateResponse)

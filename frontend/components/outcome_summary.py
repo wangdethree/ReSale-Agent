@@ -7,7 +7,7 @@ import streamlit as st
 
 def render_outcome_summary(summary: dict[str, Any]) -> None:
     total_count = int(summary.get("total_count", 0))
-    with st.expander("成交复盘", expanded=False):
+    with st.expander("复盘结果", expanded=False):
         if total_count == 0:
             st.caption("暂无成交反馈")
             return

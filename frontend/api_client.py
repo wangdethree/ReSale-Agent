@@ -36,8 +36,17 @@ class ApiClient:
         self._raise_for_status(response)
         return response.json()
 
-    def outcome_summary(self) -> dict[str, Any]:
-        response = requests.get(f"{API_BASE_URL}/sessions/outcomes/summary", timeout=15)
+    def outcome_summary(self, category: str | None = None, sold_channel: str | None = None) -> dict[str, Any]:
+        params = {
+            key: value
+            for key, value in {"category": category, "sold_channel": sold_channel}.items()
+            if value
+        }
+        response = requests.get(
+            f"{API_BASE_URL}/sessions/outcomes/summary",
+            params=params,
+            timeout=15,
+        )
         self._raise_for_status(response)
         return response.json()
 

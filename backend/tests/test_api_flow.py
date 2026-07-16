@@ -82,6 +82,18 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert summary_json["by_category"][0]["in_range_count"] == 1
         assert summary_json["recent_outcomes"][0]["session_id"] == session_id
         assert summary_json["recent_outcomes"][0]["final_sold_price"] == 280
+        filtered_summary = client.get(
+            "/api/v1/sessions/outcomes/summary",
+            params={"category": "digital", "sold_channel": "闲鱼"},
+        )
+        assert filtered_summary.status_code == 200
+        assert filtered_summary.json()["total_count"] == 1
+        empty_channel_summary = client.get(
+            "/api/v1/sessions/outcomes/summary",
+            params={"category": "digital", "sold_channel": "转转"},
+        )
+        assert empty_channel_summary.status_code == 200
+        assert empty_channel_summary.json()["total_count"] == 0
 
         exported = client.get(f"/api/v1/sessions/{session_id}/export")
         assert exported.status_code == 200

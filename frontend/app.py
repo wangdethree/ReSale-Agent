@@ -14,7 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from frontend.api_client import ApiClient
 from frontend.components.confirmation_form import render_confirmation_form
 from frontend.components.negotiation_panel import render_negotiation_panel, render_negotiation_result
-from frontend.components.outcome_panel import render_outcome_panel
+from frontend.components.outcome_panel import CHANNEL_OPTIONS, render_outcome_panel
 from frontend.components.outcome_summary import render_outcome_summary
 from frontend.components.pricing_card import render_listing
 from frontend.components.question_form import render_question_form
@@ -90,8 +90,26 @@ with st.sidebar:
             st.caption("暂无草稿")
 
     st.divider()
+    st.write("成交复盘")
+    summary_category = st.selectbox(
+        "复盘类别",
+        ["", *CATEGORY_OPTIONS.keys()],
+        format_func=lambda value: "全部类别" if not value else CATEGORY_OPTIONS[value],
+        key="outcome_summary_category",
+    )
+    summary_channel = st.selectbox(
+        "成交渠道",
+        ["", *CHANNEL_OPTIONS],
+        format_func=lambda value: "全部渠道" if not value else value,
+        key="outcome_summary_channel",
+    )
     try:
-        render_outcome_summary(client.outcome_summary())
+        render_outcome_summary(
+            client.outcome_summary(
+                category=summary_category or None,
+                sold_channel=summary_channel or None,
+            )
+        )
     except RuntimeError as exc:
         st.caption(f"成交复盘暂不可用：{exc}")
 
