@@ -140,6 +140,11 @@ class ApiClient:
         self._raise_for_status(response)
         return response.json()
 
+    def market_data_audit(self, limit: int = 10) -> dict[str, Any]:
+        response = requests.get(f"{API_BASE_URL}/market-data/audit", params={"limit": limit}, timeout=15)
+        self._raise_for_status(response)
+        return response.json()
+
     def delete_market_data_sample(self, item_id: int) -> None:
         response = requests.delete(f"{API_BASE_URL}/market-data/samples/{item_id}", timeout=15)
         self._raise_for_status(response)

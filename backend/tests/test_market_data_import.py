@@ -116,5 +116,14 @@ def test_market_data_import_feeds_local_similarity(monkeypatch, tmp_path) -> Non
         assert samples_after_delete.status_code == 200
         assert samples_after_delete.json()["total_count"] == 0
 
+        audit = client.get("/api/v1/market-data/audit", params={"limit": 10})
+        assert audit.status_code == 200
+        audit_json = audit.json()
+        actions = [item["action"] for item in audit_json["items"]]
+        assert actions[:4] == ["delete", "restore", "disable", "import"]
+        delete_event = audit_json["items"][0]
+        assert delete_event["item_id"] == imported_item["id"]
+        assert delete_event["detail"]["before"]["source_name"] == "测试授权表"
+
     results_after_delete = search_similar_items("digital", "mechanical_keyboard", "Keychron", "K2", limit=1)
     assert results_after_delete[0]["source_type"] == "seed"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from backend.app.core.exceptions import AppError
@@ -79,15 +80,7 @@ class ProductRepository:
 
         items: list[dict[str, Any]] = []
         for row in rows:
-            item = dict(row)
-            item["category_label"] = CATEGORY_LABELS.get(item["category"], item["category"])
-            item["accessories_complete"] = bool(item["accessories_complete"])
-            item["source_name"] = item.get("source_name") or "内置模拟数据"
-            item["source_type"] = item.get("source_type") or "seed"
-            item["active"] = bool(item.get("active", 1))
-            item["deletable"] = item["source_type"] == "imported"
-            item["editable"] = item["source_type"] == "imported"
-            items.append(item)
+            items.append(self._build_reference_item(dict(row)))
 
         by_source_type: dict[str, int] = {}
         by_category: dict[str, int] = {}
@@ -106,23 +99,52 @@ class ProductRepository:
             "items": items[:limit],
         }
 
+    def list_sample_events(
+        self,
+        item_id: int | None = None,
+        action: str | None = None,
+        limit: int = 30,
+    ) -> dict[str, Any]:
+        clauses: list[str] = []
+        params: list[Any] = []
+        if item_id is not None:
+            clauses.append("item_id = ?")
+            params.append(item_id)
+        if action:
+            clauses.append("action = ?")
+            params.append(action)
+        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+
+        with get_connection() as conn:
+            rows = conn.execute(
+                f"""
+                SELECT id, item_id, action, category, product_type, brand, model,
+                       source_name, source_type, detail_json, created_at
+                FROM market_sample_events
+                {where_sql}
+                ORDER BY created_at DESC, id DESC
+                """,
+                params,
+            ).fetchall()
+
+        events: list[dict[str, Any]] = []
+        for row in rows:
+            event = dict(row)
+            event["category_label"] = CATEGORY_LABELS.get(event.get("category"), event.get("category"))
+            event["detail"] = json.loads(event.pop("detail_json") or "{}")
+            events.append(event)
+        return {"total_count": len(events), "items": events[:limit]}
+
     def update_reference_item(self, item_id: int, active: bool | None = None, user_notes: str | None = None) -> dict[str, Any]:
         with get_connection() as conn:
-            row = conn.execute(
-                """
-                SELECT id, source_type, active, user_notes
-                FROM reference_items
-                WHERE id = ?
-                """,
-                (item_id,),
-            ).fetchone()
-            if row is None:
+            before = self._fetch_reference_item(conn, item_id)
+            if before is None:
                 raise AppError("价格样本不存在", status_code=404, code="market_sample_not_found")
-            if (row["source_type"] or "seed") != "imported":
+            if (before["source_type"] or "seed") != "imported":
                 raise AppError("内置价格样本不能修改", status_code=400, code="market_sample_not_editable")
 
-            next_active = bool(row["active"]) if active is None else active
-            next_notes = row["user_notes"] if user_notes is None else user_notes.strip()
+            next_active = bool(before["active"]) if active is None else active
+            next_notes = before["user_notes"] if user_notes is None else user_notes.strip()
             conn.execute(
                 """
                 UPDATE reference_items
@@ -145,6 +167,11 @@ class ProductRepository:
                     item_id,
                 ),
             )
+            after = self._fetch_reference_item(conn, item_id)
+            if after is None:
+                raise AppError("价格样本不存在", status_code=404, code="market_sample_not_found")
+            action = self._resolve_update_action(bool(before["active"]), bool(after["active"]))
+            self._record_sample_event(conn, after, action, {"before": before, "after": after})
             conn.commit()
         return self.get_reference_item(item_id)
 
@@ -157,14 +184,12 @@ class ProductRepository:
 
     def delete_reference_item(self, item_id: int) -> None:
         with get_connection() as conn:
-            row = conn.execute(
-                "SELECT source_type FROM reference_items WHERE id = ?",
-                (item_id,),
-            ).fetchone()
+            row = self._fetch_reference_item(conn, item_id)
             if row is None:
                 raise AppError("价格样本不存在", status_code=404, code="market_sample_not_found")
             if (row["source_type"] or "seed") != "imported":
                 raise AppError("内置价格样本不能删除", status_code=400, code="market_sample_not_deletable")
+            self._record_sample_event(conn, row, "delete", {"before": row})
             conn.execute("DELETE FROM reference_items WHERE id = ?", (item_id,))
             conn.commit()
 
@@ -200,7 +225,7 @@ class ProductRepository:
                     skipped_count += 1
                     continue
 
-                conn.execute(
+                cursor = conn.execute(
                     """
                     INSERT INTO reference_items (
                         category, product_type, brand, model, condition_level, age_months,
@@ -225,6 +250,17 @@ class ProductRepository:
                         item.get("source_url"),
                     ),
                 )
+                event_item = self._build_reference_item(
+                    {
+                        **item,
+                        "id": cursor.lastrowid,
+                        "active": 1,
+                        "user_notes": None,
+                        "disabled_at": None,
+                        "imported_at": None,
+                    }
+                )
+                self._record_sample_event(conn, event_item, "import", {"after": event_item})
                 imported_count += 1
             conn.commit()
         return {"imported_count": imported_count, "skipped_count": skipped_count}
@@ -270,3 +306,56 @@ class ProductRepository:
         for item in results:
             item.pop("_score", None)
         return results
+
+    def _fetch_reference_item(self, conn: Any, item_id: int) -> dict[str, Any] | None:
+        row = conn.execute(
+            """
+            SELECT id, category, product_type, brand, model, condition_level, age_months,
+                   original_price, listing_price, sold_price, accessories_complete, description,
+                   source_name, source_type, source_url, imported_at, active, user_notes, disabled_at
+            FROM reference_items
+            WHERE id = ?
+            """,
+            (item_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        return self._build_reference_item(dict(row))
+
+    def _build_reference_item(self, item: dict[str, Any]) -> dict[str, Any]:
+        item["category_label"] = CATEGORY_LABELS.get(item["category"], item["category"])
+        item["accessories_complete"] = bool(item["accessories_complete"])
+        item["source_name"] = item.get("source_name") or "内置模拟数据"
+        item["source_type"] = item.get("source_type") or "seed"
+        item["active"] = bool(item.get("active", 1))
+        item["deletable"] = item["source_type"] == "imported"
+        item["editable"] = item["source_type"] == "imported"
+        return item
+
+    def _record_sample_event(self, conn: Any, item: dict[str, Any], action: str, detail: dict[str, Any]) -> None:
+        conn.execute(
+            """
+            INSERT INTO market_sample_events (
+                item_id, action, category, product_type, brand, model,
+                source_name, source_type, detail_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                item.get("id"),
+                action,
+                item.get("category"),
+                item.get("product_type"),
+                item.get("brand"),
+                item.get("model"),
+                item.get("source_name"),
+                item.get("source_type"),
+                json.dumps(detail, ensure_ascii=False),
+            ),
+        )
+
+    def _resolve_update_action(self, before_active: bool, after_active: bool) -> str:
+        if before_active and not after_active:
+            return "disable"
+        if not before_active and after_active:
+            return "restore"
+        return "update"

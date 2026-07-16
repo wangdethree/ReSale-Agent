@@ -40,6 +40,20 @@ def create_tables(conn: Connection) -> None:
             disabled_at DATETIME
         );
 
+        CREATE TABLE IF NOT EXISTS market_sample_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            item_id INTEGER,
+            action TEXT NOT NULL,
+            category TEXT,
+            product_type TEXT,
+            brand TEXT,
+            model TEXT,
+            source_name TEXT,
+            source_type TEXT,
+            detail_json TEXT NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
         CREATE TABLE IF NOT EXISTS negotiation_messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id TEXT NOT NULL,

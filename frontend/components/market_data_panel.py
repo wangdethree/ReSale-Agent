@@ -7,9 +7,19 @@ import streamlit as st
 
 SOURCE_TYPE_LABELS = {"seed": "内置模拟", "imported": "导入样本"}
 ACTIVE_LABELS = {"active": "启用", "inactive": "停用"}
+ACTION_LABELS = {
+    "import": "导入",
+    "update": "更新",
+    "disable": "停用",
+    "restore": "恢复",
+    "delete": "删除",
+}
 
 
-def render_market_data_panel(samples: dict[str, Any]) -> tuple[dict[str, Any] | None, dict[str, Any] | None, int | None]:
+def render_market_data_panel(
+    samples: dict[str, Any],
+    audit: dict[str, Any],
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, int | None]:
     import_payload: dict[str, Any] | None = None
     update_payload: dict[str, Any] | None = None
     delete_id: int | None = None
@@ -81,6 +91,12 @@ def render_market_data_panel(samples: dict[str, Any]) -> tuple[dict[str, Any] | 
                             delete_id = int(selected_edit_id)
         else:
             st.caption("暂无样本")
+
+        events = audit.get("items", [])
+        if events:
+            st.write("最近操作")
+            for event in events[:6]:
+                st.caption(_audit_label(event))
     return import_payload, update_payload, delete_id
 
 
@@ -111,3 +127,11 @@ def _find_sample(items: list[dict[str, Any]], item_id: int) -> dict[str, Any] | 
 
 def _status_label(item: dict[str, Any]) -> str:
     return "启用" if item.get("active", True) else "停用"
+
+
+def _audit_label(event: dict[str, Any]) -> str:
+    action = ACTION_LABELS.get(event.get("action"), event.get("action", "操作"))
+    brand_model = " ".join(part for part in [event.get("brand"), event.get("model")] if part)
+    product = brand_model or event.get("product_type") or "价格样本"
+    created_at = str(event.get("created_at") or "")[:16]
+    return f"{created_at} · {action} · {product} · {event.get('source_name') or '本地样本'}"

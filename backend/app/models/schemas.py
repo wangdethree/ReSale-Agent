@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, field_validator
 Category = Literal["digital", "book", "appliance", "clothing", "furniture", "shoe_bag"]
 InventoryStatus = Literal["draft", "ready", "listed", "sold", "archived"]
 MarketSampleSourceType = Literal["seed", "imported"]
+MarketSampleAction = Literal["import", "update", "disable", "restore", "delete"]
 
 
 class SessionCreate(BaseModel):
@@ -171,6 +172,26 @@ class MarketDataListResponse(BaseModel):
     by_category: dict[str, int]
     by_active: dict[str, int]
     items: list[MarketDataSampleItem]
+
+
+class MarketDataAuditItem(BaseModel):
+    id: int
+    item_id: int | None = None
+    action: MarketSampleAction
+    category: Category | None = None
+    category_label: str | None = None
+    product_type: str | None = None
+    brand: str | None = None
+    model: str | None = None
+    source_name: str | None = None
+    source_type: MarketSampleSourceType | None = None
+    detail: dict[str, Any]
+    created_at: str
+
+
+class MarketDataAuditResponse(BaseModel):
+    total_count: int
+    items: list[MarketDataAuditItem]
 
 
 class OutcomeSummaryItem(BaseModel):

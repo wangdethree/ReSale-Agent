@@ -5,10 +5,12 @@ from fastapi import APIRouter, File, Form, Query, UploadFile
 from backend.app.core.exceptions import AppError
 from backend.app.models.schemas import (
     Category,
+    MarketDataAuditResponse,
     MarketDataImportResponse,
     MarketDataListResponse,
     MarketDataSampleItem,
     MarketDataSampleUpdateRequest,
+    MarketSampleAction,
     MarketSampleSourceType,
 )
 from backend.app.repositories.product_repository import ProductRepository
@@ -17,6 +19,15 @@ from backend.app.services.market_data_import_service import MarketDataImportServ
 
 router = APIRouter()
 repo = ProductRepository()
+
+
+@router.get("/audit", response_model=MarketDataAuditResponse)
+def list_market_data_audit(
+    item_id: int | None = Query(default=None),
+    action: MarketSampleAction | None = Query(default=None),
+    limit: int = Query(default=30, ge=1, le=100),
+) -> MarketDataAuditResponse:
+    return MarketDataAuditResponse(**repo.list_sample_events(item_id=item_id, action=action, limit=limit))
 
 
 @router.get("/samples", response_model=MarketDataListResponse)
