@@ -39,8 +39,42 @@ def test_market_data_import_feeds_local_similarity(monkeypatch, tmp_path) -> Non
         assert duplicate.status_code == 200
         assert duplicate.json()["skipped_count"] == 1
 
+        samples = client.get(
+            "/api/v1/market-data/samples",
+            params={"category": "digital", "source_type": "imported"},
+        )
+        assert samples.status_code == 200
+        samples_json = samples.json()
+        assert samples_json["total_count"] == 1
+        assert samples_json["by_source_type"] == {"imported": 1}
+        imported_item = samples_json["items"][0]
+        assert imported_item["deletable"] is True
+        assert imported_item["source_name"] == "测试授权表"
+
+        seed_samples = client.get(
+            "/api/v1/market-data/samples",
+            params={"category": "digital", "source_type": "seed", "limit": 1},
+        )
+        assert seed_samples.status_code == 200
+        seed_item = seed_samples.json()["items"][0]
+        forbidden_delete = client.delete(f"/api/v1/market-data/samples/{seed_item['id']}")
+        assert forbidden_delete.status_code == 400
+
     results = search_similar_items("digital", "mechanical_keyboard", "Keychron", "K2", limit=1)
     assert results[0]["source_type"] == "imported"
     assert results[0]["source_name"] == "测试授权表"
     assert results[0]["sold_price"] == 420
     assert "用户导入样本" in results[0]["match_reasons"]
+
+    with TestClient(app) as client:
+        deleted = client.delete(f"/api/v1/market-data/samples/{imported_item['id']}")
+        assert deleted.status_code == 204
+        samples_after_delete = client.get(
+            "/api/v1/market-data/samples",
+            params={"category": "digital", "source_type": "imported"},
+        )
+        assert samples_after_delete.status_code == 200
+        assert samples_after_delete.json()["total_count"] == 0
+
+    results_after_delete = search_similar_items("digital", "mechanical_keyboard", "Keychron", "K2", limit=1)
+    assert results_after_delete[0]["source_type"] == "seed"

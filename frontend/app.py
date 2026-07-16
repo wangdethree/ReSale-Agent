@@ -14,7 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from frontend.api_client import ApiClient
 from frontend.components.confirmation_form import render_confirmation_form
 from frontend.components.inventory_panel import INVENTORY_STATUS_LABELS, render_inventory_panel, render_inventory_summary
-from frontend.components.market_data_panel import render_market_data_import, render_market_data_import_result
+from frontend.components.market_data_panel import SOURCE_TYPE_LABELS, render_market_data_import_result, render_market_data_panel
 from frontend.components.negotiation_panel import render_negotiation_panel, render_negotiation_result
 from frontend.components.outcome_panel import CHANNEL_OPTIONS, render_outcome_panel
 from frontend.components.outcome_summary import render_outcome_summary
@@ -148,13 +148,33 @@ with st.sidebar:
         st.caption(f"库存总览暂不可用：{exc}")
 
     st.divider()
-    import_payload = render_market_data_import()
-    if import_payload:
-        try:
+    st.write("价格样本")
+    market_category = st.selectbox(
+        "样本类别",
+        ["", *CATEGORY_OPTIONS.keys()],
+        format_func=lambda value: "全部类别" if not value else CATEGORY_OPTIONS[value],
+        key="market_data_category",
+    )
+    market_source_type = st.selectbox(
+        "样本来源",
+        ["", *SOURCE_TYPE_LABELS.keys()],
+        format_func=lambda value: "全部来源" if not value else SOURCE_TYPE_LABELS[value],
+        key="market_data_source_type",
+    )
+    try:
+        market_samples = client.market_data_samples(
+            category=market_category or None,
+            source_type=market_source_type or None,
+        )
+        import_payload, delete_sample_id = render_market_data_panel(market_samples)
+        if import_payload:
             import_result = client.import_market_data_csv(import_payload["file"], import_payload["source_name"])
             render_market_data_import_result(import_result)
-        except RuntimeError as exc:
-            st.caption(f"价格样本导入失败：{exc}")
+        if delete_sample_id:
+            client.delete_market_data_sample(delete_sample_id)
+            st.rerun()
+    except RuntimeError as exc:
+        st.caption(f"价格样本暂不可用：{exc}")
 
 
 try:

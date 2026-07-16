@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 
 Category = Literal["digital", "book", "appliance", "clothing", "furniture", "shoe_bag"]
 InventoryStatus = Literal["draft", "ready", "listed", "sold", "archived"]
+MarketSampleSourceType = Literal["seed", "imported"]
 
 
 class SessionCreate(BaseModel):
@@ -132,6 +133,34 @@ class MarketDataImportResponse(BaseModel):
     source_name: str
     accepted_columns: list[str]
     errors: list[MarketDataImportError] = Field(default_factory=list)
+
+
+class MarketDataSampleItem(BaseModel):
+    id: int
+    category: Category
+    category_label: str
+    product_type: str
+    brand: str | None = None
+    model: str | None = None
+    condition_level: str
+    age_months: int
+    original_price: float
+    listing_price: float
+    sold_price: float
+    accessories_complete: bool
+    description: str
+    source_name: str
+    source_type: MarketSampleSourceType
+    source_url: str | None = None
+    imported_at: str | None = None
+    deletable: bool = False
+
+
+class MarketDataListResponse(BaseModel):
+    total_count: int
+    by_source_type: dict[str, int]
+    by_category: dict[str, int]
+    items: list[MarketDataSampleItem]
 
 
 class OutcomeSummaryItem(BaseModel):

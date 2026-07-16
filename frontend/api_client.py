@@ -120,6 +120,20 @@ class ApiClient:
         self._raise_for_status(response)
         return response.json()
 
+    def market_data_samples(self, category: str | None = None, source_type: str | None = None) -> dict[str, Any]:
+        params = {
+            key: value
+            for key, value in {"category": category, "source_type": source_type}.items()
+            if value
+        }
+        response = requests.get(f"{API_BASE_URL}/market-data/samples", params=params, timeout=15)
+        self._raise_for_status(response)
+        return response.json()
+
+    def delete_market_data_sample(self, item_id: int) -> None:
+        response = requests.delete(f"{API_BASE_URL}/market-data/samples/{item_id}", timeout=15)
+        self._raise_for_status(response)
+
     def analyze_images(self, session_id: str, files: list[Any]) -> dict[str, Any]:
         multipart = [
             ("files", (file.name, file.getvalue(), file.type or "image/jpeg"))
