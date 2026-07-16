@@ -30,6 +30,7 @@ class ListingService:
             model_listing = None
         listing = model_listing or template
         listing["platform_copies"] = self._platform_copies(state, listing)
+        listing["publish_checklist"] = self._publish_checklist(state, listing)
         return listing
 
     def _template_listing(self, state: dict[str, Any]) -> dict[str, Any]:
@@ -272,6 +273,123 @@ class ListingService:
 
     def _platform_tags(self, keywords: list[str], extra: list[str]) -> list[str]:
         return list(dict.fromkeys([*keywords, *extra]))[:8]
+
+    def _publish_checklist(self, state: dict[str, Any], listing: dict[str, Any]) -> list[dict[str, Any]]:
+        items = [
+            self._check_item(
+                "copy",
+                "标题和正文",
+                bool(listing.get("title") and listing.get("description")),
+                "已生成标题和商品描述，可直接复制到平台。",
+                "请先生成完整标题和商品描述。",
+            ),
+            self._check_item(
+                "price",
+                "价格区间",
+                all(state.get(key) is not None for key in ["listing_price", "deal_price_min", "deal_price_max"]),
+                (
+                    f"挂牌 {state.get('listing_price')} 元，"
+                    f"成交区间 {state.get('deal_price_min')}～{state.get('deal_price_max')} 元。"
+                ),
+                "请先生成估价结果。",
+            ),
+            self._check_item(
+                "defects",
+                "瑕疵说明",
+                bool(self._join_list(state.get("visible_defects")) or self._join_list(state.get("additional_defects"))),
+                listing.get("defect_statement") or "已补充瑕疵说明。",
+                "未补充明确瑕疵，发布前建议再次检查并拍细节图。",
+                missing_status="review",
+            ),
+            self._check_item(
+                "photos",
+                "照片补充",
+                len(state.get("image_paths", [])) >= 3,
+                f"已上传 {len(state.get('image_paths', []))} 张图片。",
+                "建议至少准备 3 张图片：整体、细节瑕疵、配件或关键标识。",
+                missing_status="review",
+            ),
+            self._check_item(
+                "delivery",
+                "交易方式",
+                bool(state.get("delivery_options") or state.get("pickup_requirement")),
+                str(state.get("delivery_options") or state.get("pickup_requirement")),
+                "请补充邮寄、自提、同城验货或搬运条件。",
+            ),
+        ]
+        items.extend(self._category_checklist(state))
+        return items
+
+    def _category_checklist(self, state: dict[str, Any]) -> list[dict[str, Any]]:
+        category = state.get("category")
+        if category == "book":
+            return [
+                self._check_item(
+                    "book_condition",
+                    "图书页况",
+                    bool(state.get("set_status") and state.get("notes_status") and state.get("damage_status")),
+                    "已说明成套情况、笔记划线和破损情况。",
+                    "请补充是否缺册、笔记划线、缺页污损等信息。",
+                )
+            ]
+        if category == "clothing":
+            return [
+                self._check_item(
+                    "clothing_condition",
+                    "尺码和清洗",
+                    bool(state.get("size") and state.get("material") and state.get("wear_status") and state.get("wash_status")),
+                    "已说明尺码、材质、穿着和清洗情况。",
+                    "请补充尺码、材质、穿着频率和清洗/缩水情况。",
+                )
+            ]
+        if category == "furniture":
+            return [
+                self._check_item(
+                    "furniture_pickup",
+                    "尺寸和搬运",
+                    bool(state.get("dimensions") and state.get("installation_status") and state.get("pickup_requirement")),
+                    "已说明尺寸、拆装状态和搬运条件。",
+                    "请补充尺寸、是否可拆装、有无电梯和自提要求。",
+                )
+            ]
+        if category == "shoe_bag":
+            return [
+                self._check_item(
+                    "shoe_bag_authenticity",
+                    "尺码和验货",
+                    bool(state.get("size") and state.get("clean_status") and state.get("authenticity_status")),
+                    "已说明尺码、清洁状态和购买渠道/验货信息。",
+                    "请补充尺码、清洁保养、购买渠道和是否支持验货。",
+                )
+            ]
+        return [
+            self._check_item(
+                "functional_condition",
+                "功能和配件",
+                bool(state.get("functional_status") and state.get("repair_history") and self._join_list(state.get("accessories"))),
+                "已说明功能状态、维修记录和配件情况。",
+                "请补充功能状态、维修记录和配件清单。",
+            )
+        ]
+
+    def _check_item(
+        self,
+        item_id: str,
+        title: str,
+        passed: bool,
+        done_detail: str,
+        missing_detail: str,
+        *,
+        missing_status: str = "todo",
+        required: bool = True,
+    ) -> dict[str, Any]:
+        return {
+            "item_id": item_id,
+            "title": title,
+            "status": "done" if passed else missing_status,
+            "detail": done_detail if passed else missing_detail,
+            "required": required,
+        }
 
     def _join_list(self, value: Any) -> str:
         if isinstance(value, list):

@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 
 from backend.app.agent.graph import ReSaleAgentGraph
-from backend.app.models.schemas import ListingResponse, PlatformCopy, PriceResult, SimilarItem
+from backend.app.models.schemas import ListingResponse, PlatformCopy, PriceResult, PublishChecklistItem, SimilarItem
 from backend.app.repositories.session_repository import SessionRepository
 from backend.app.services.export_service import ExportService
 
@@ -37,6 +37,7 @@ def generate_listing(session_id: str) -> ListingResponse:
         defect_statement=state["defect_statement"],
         photo_suggestions=state["photo_suggestions"],
         platform_copies=[PlatformCopy(**item) for item in state.get("platform_copies", [])],
+        publish_checklist=[PublishChecklistItem(**item) for item in state.get("publish_checklist", [])],
         sale_outcome=state.get("sale_outcome"),
         trace=state.get("trace", []),
     )

@@ -51,6 +51,10 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         platform_copies = listing_json["platform_copies"]
         assert {item["platform"] for item in platform_copies} == {"xianyu", "zhuanzhuan", "xiaohongshu"}
         assert all("空格键轻微划痕" in item["body"] for item in platform_copies)
+        checklist = listing_json["publish_checklist"]
+        assert checklist
+        assert {item["status"] for item in checklist} <= {"done", "review", "todo"}
+        assert any(item["item_id"] == "price" and item["status"] == "done" for item in checklist)
 
         floor = listing_json["price"]["suggested_floor_price"]
         negotiation = client.post(
@@ -101,6 +105,7 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert "## 估价拆解" in exported.text
         assert "调价明细" in exported.text
         assert "## 多平台文案" in exported.text
+        assert "## 发布前检查" in exported.text
         assert "### 闲鱼" in exported.text
         assert "## 成交反馈" in exported.text
         assert "两天内成交" in exported.text
@@ -169,3 +174,4 @@ def test_image_upload_keeps_original_names_for_local_similarity(monkeypatch, tmp
         assert listing_json["similar_items"][0]["brand"] == "Nike"
         assert listing_json["similar_items"][0]["image_similarity_score"] > 0
         assert listing_json["price"]["price_breakdown"]["image_similarity_used"] is True
+        assert any(item["item_id"] == "shoe_bag_authenticity" for item in listing_json["publish_checklist"])

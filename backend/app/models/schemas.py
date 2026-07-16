@@ -151,6 +151,14 @@ class PlatformCopy(BaseModel):
     tags: list[str]
 
 
+class PublishChecklistItem(BaseModel):
+    item_id: str
+    title: str
+    status: Literal["done", "review", "todo"]
+    detail: str
+    required: bool = True
+
+
 class ListingResponse(BaseModel):
     session_id: str
     price: PriceResult
@@ -161,6 +169,7 @@ class ListingResponse(BaseModel):
     defect_statement: str
     photo_suggestions: list[str]
     platform_copies: list[PlatformCopy]
+    publish_checklist: list[PublishChecklistItem] = Field(default_factory=list)
     sale_outcome: dict[str, Any] | None = None
     trace: list[dict[str, Any]]
 

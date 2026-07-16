@@ -92,6 +92,26 @@ def _render_platform_copies(platform_copies: list[dict[str, Any]]) -> None:
             st.write("标签：", "、".join(item.get("tags", [])))
 
 
+def _render_publish_checklist(items: list[dict[str, Any]]) -> None:
+    if not items:
+        return
+
+    status_labels = {"done": "完成", "review": "复核", "todo": "待补充"}
+    st.markdown("#### 发布前检查")
+    st.dataframe(
+        [
+            {
+                "状态": status_labels.get(item.get("status"), item.get("status", "")),
+                "项目": item.get("title", ""),
+                "说明": item.get("detail", ""),
+            }
+            for item in items
+        ],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+
 def render_listing(listing: dict[str, Any]) -> None:
     st.subheader("出售方案")
     price = listing["price"]
@@ -122,6 +142,7 @@ def render_listing(listing: dict[str, Any]) -> None:
     st.text_area("描述", value=listing["description"], height=180)
     st.write("关键词：", "、".join(listing["keywords"]))
     st.write(listing["defect_statement"])
+    _render_publish_checklist(listing.get("publish_checklist", []))
     _render_platform_copies(listing.get("platform_copies", []))
 
     st.markdown("#### 拍照建议")

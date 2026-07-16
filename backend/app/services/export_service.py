@@ -13,6 +13,7 @@ class ExportService:
         breakdown_lines = self._build_breakdown_lines(state.get("price_breakdown", {}))
         photo_lines = [f"- {item}" for item in state.get("photo_suggestions", [])]
         platform_lines = self._build_platform_lines(state.get("platform_copies", []))
+        checklist_lines = self._build_checklist_lines(state.get("publish_checklist", []))
         outcome_lines = self._build_outcome_lines(state.get("sale_outcome"))
         keyword_text = "、".join(state.get("keywords", []))
 
@@ -40,6 +41,9 @@ class ExportService:
                 "",
                 "## 多平台文案",
                 *(platform_lines or ["- 尚未生成多平台文案。"]),
+                "",
+                "## 发布前检查",
+                *(checklist_lines or ["- 尚未生成发布前检查清单。"]),
                 "",
                 "## 成交反馈",
                 *(outcome_lines or ["- 尚未记录成交反馈。"]),
@@ -130,6 +134,16 @@ class ExportService:
                 ]
             )
         return lines
+
+    def _build_checklist_lines(self, checklist: list[dict[str, Any]]) -> list[str]:
+        status_labels = {"done": "完成", "review": "复核", "todo": "待补充"}
+        return [
+            (
+                f"- [{status_labels.get(item.get('status'), item.get('status', ''))}] "
+                f"{item.get('title', '')}：{item.get('detail', '')}"
+            )
+            for item in checklist
+        ]
 
     def _build_outcome_lines(self, outcome: dict[str, Any] | None) -> list[str]:
         if not outcome:
