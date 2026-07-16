@@ -44,6 +44,7 @@ class SaleAgentState(TypedDict, total=False):
     keywords: list[str]
     defect_statement: str | None
     photo_suggestions: list[str]
+    platform_copies: list[dict[str, Any]]
 
     buyer_message: str | None
     buyer_intent: str | None

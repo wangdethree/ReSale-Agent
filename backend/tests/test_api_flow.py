@@ -48,6 +48,9 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert listing_json["price"]["price_breakdown"]["market_sample_count"] >= 3
         assert listing_json["price"]["price_breakdown"]["base_price"] > 0
         assert "Keychron" in listing_json["title"]
+        platform_copies = listing_json["platform_copies"]
+        assert {item["platform"] for item in platform_copies} == {"xianyu", "zhuanzhuan", "xiaohongshu"}
+        assert all("空格键轻微划痕" in item["body"] for item in platform_copies)
 
         floor = listing_json["price"]["suggested_floor_price"]
         negotiation = client.post(
@@ -62,6 +65,8 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert exported.status_code == 200
         assert "# 闲置 Keychron K2" in exported.text
         assert "## 估价拆解" in exported.text
+        assert "## 多平台文案" in exported.text
+        assert "### 闲鱼" in exported.text
 
         sessions = client.get("/api/v1/sessions")
         assert sessions.status_code == 200

@@ -89,6 +89,7 @@ def _listing_from_state(state: dict[str, Any]) -> dict[str, Any] | None:
         "keywords": state.get("keywords", []),
         "defect_statement": state.get("defect_statement", ""),
         "photo_suggestions": state.get("photo_suggestions", []),
+        "platform_copies": state.get("platform_copies", []),
         "trace": state.get("trace", []),
     }
 

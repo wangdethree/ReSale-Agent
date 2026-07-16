@@ -12,6 +12,7 @@ class ExportService:
         reason_lines = [f"- {reason}" for reason in state.get("price_reasons", [])]
         breakdown_lines = self._build_breakdown_lines(state.get("price_breakdown", {}))
         photo_lines = [f"- {item}" for item in state.get("photo_suggestions", [])]
+        platform_lines = self._build_platform_lines(state.get("platform_copies", []))
         keyword_text = "、".join(state.get("keywords", []))
 
         return "\n".join(
@@ -35,6 +36,9 @@ class ExportService:
                 "",
                 "## 出售文案",
                 state.get("description") or "尚未生成文案。",
+                "",
+                "## 多平台文案",
+                *(platform_lines or ["- 尚未生成多平台文案。"]),
                 "",
                 "## 搜索关键词",
                 keyword_text or "暂无关键词",
@@ -71,3 +75,21 @@ class ExportService:
                 f"相似样本 {breakdown.get('market_sample_count', 0)} 条。"
             ),
         ]
+
+    def _build_platform_lines(self, platform_copies: list[dict[str, Any]]) -> list[str]:
+        lines: list[str] = []
+        for copy in platform_copies:
+            tags = "、".join(copy.get("tags", []))
+            lines.extend(
+                [
+                    f"### {copy.get('platform_label') or copy.get('platform')}",
+                    "",
+                    f"标题：{copy.get('title', '')}",
+                    "",
+                    str(copy.get("body", "")),
+                    "",
+                    f"标签：{tags or '暂无标签'}",
+                    "",
+                ]
+            )
+        return lines

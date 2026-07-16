@@ -91,6 +91,14 @@ class PriceResult(BaseModel):
     price_breakdown: dict[str, Any]
 
 
+class PlatformCopy(BaseModel):
+    platform: Literal["xianyu", "zhuanzhuan", "xiaohongshu"]
+    platform_label: str
+    title: str
+    body: str
+    tags: list[str]
+
+
 class ListingResponse(BaseModel):
     session_id: str
     price: PriceResult
@@ -100,6 +108,7 @@ class ListingResponse(BaseModel):
     keywords: list[str]
     defect_statement: str
     photo_suggestions: list[str]
+    platform_copies: list[PlatformCopy]
     trace: list[dict[str, Any]]
 
 

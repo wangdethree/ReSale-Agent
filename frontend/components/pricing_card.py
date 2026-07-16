@@ -43,6 +43,28 @@ def _render_price_breakdown(price: dict[str, Any]) -> None:
     )
 
 
+def _render_platform_copies(platform_copies: list[dict[str, Any]]) -> None:
+    if not platform_copies:
+        return
+
+    st.markdown("#### 多平台文案")
+    tabs = st.tabs([item.get("platform_label", item.get("platform", "平台")) for item in platform_copies])
+    for tab, item in zip(tabs, platform_copies, strict=False):
+        with tab:
+            st.text_input(
+                "标题",
+                value=item.get("title", ""),
+                key=f"platform-title-{item.get('platform')}",
+            )
+            st.text_area(
+                "正文",
+                value=item.get("body", ""),
+                height=180,
+                key=f"platform-body-{item.get('platform')}",
+            )
+            st.write("标签：", "、".join(item.get("tags", [])))
+
+
 def render_listing(listing: dict[str, Any]) -> None:
     st.subheader("出售方案")
     price = listing["price"]
@@ -66,6 +88,7 @@ def render_listing(listing: dict[str, Any]) -> None:
     st.text_area("描述", value=listing["description"], height=180)
     st.write("关键词：", "、".join(listing["keywords"]))
     st.write(listing["defect_statement"])
+    _render_platform_copies(listing.get("platform_copies", []))
 
     st.markdown("#### 拍照建议")
     for suggestion in listing["photo_suggestions"]:

@@ -11,6 +11,12 @@ CATEGORY_LABELS = {
     "appliance": "小家电",
 }
 
+PLATFORM_LABELS = {
+    "xianyu": "闲鱼",
+    "zhuanzhuan": "转转",
+    "xiaohongshu": "小红书",
+}
+
 
 class ListingService:
     def generate(self, state: dict[str, Any]) -> dict[str, Any]:
@@ -19,7 +25,9 @@ class ListingService:
             model_listing = self._generate_with_model(state, template)
         except Exception:
             model_listing = None
-        return model_listing or template
+        listing = model_listing or template
+        listing["platform_copies"] = self._platform_copies(state, listing)
+        return listing
 
     def _template_listing(self, state: dict[str, Any]) -> dict[str, Any]:
         category = state.get("category", "digital")
@@ -45,6 +53,7 @@ class ListingService:
             "keywords": keywords,
             "defect_statement": defect_statement,
             "photo_suggestions": photo_suggestions,
+            "platform_copies": [],
         }
 
     def _generate_with_model(self, state: dict[str, Any], template: dict[str, Any]) -> dict[str, Any] | None:
@@ -129,6 +138,78 @@ class ListingService:
         if category == "book":
             return [*common, "补一张目录页、笔记页或版本信息图"]
         return [*common, "补一张铭牌参数或通电状态图"]
+
+    def _platform_copies(self, state: dict[str, Any], listing: dict[str, Any]) -> list[dict[str, Any]]:
+        title = listing["title"]
+        keywords = listing.get("keywords", [])
+        defect_statement = listing.get("defect_statement") or self._defect_statement([])
+        price = state.get("listing_price")
+        deal_min = state.get("deal_price_min")
+        deal_max = state.get("deal_price_max")
+        price_text = f"建议挂 {price} 元" if price is not None else "价格可合理沟通"
+        deal_text = f"参考成交区间 {deal_min}～{deal_max} 元" if deal_min and deal_max else "价格已按当前信息估算"
+        delivery = state.get("delivery_options") or "支持当面或邮寄，具体可沟通"
+        product = self._product_name(state)
+        accessories = self._join_list(state.get("accessories")) or "按现有配件出售"
+
+        return [
+            {
+                "platform": "xianyu",
+                "platform_label": PLATFORM_LABELS["xianyu"],
+                "title": title,
+                "body": "\n".join(
+                    [
+                        f"自用闲置 {product} 出手，{price_text}。",
+                        f"成色：{state.get('visible_condition') or '轻微使用痕迹'}，功能：{state.get('functional_status') or '按实际情况说明'}。",
+                        f"配件：{accessories}。",
+                        defect_statement,
+                        f"{deal_text}，接受合理沟通，低价离谱就不接了。",
+                        f"交易方式：{delivery}。",
+                    ]
+                ),
+                "tags": self._platform_tags(keywords, ["自用闲置", "可小刀"]),
+            },
+            {
+                "platform": "zhuanzhuan",
+                "platform_label": PLATFORM_LABELS["zhuanzhuan"],
+                "title": f"{product}｜已验信息清楚",
+                "body": "\n".join(
+                    [
+                        f"商品：{product}",
+                        f"建议价格：{price_text}，{deal_text}",
+                        f"购买时间：{state.get('purchase_date') or '见补充说明'}",
+                        f"功能状态：{state.get('functional_status') or '已按实际情况说明'}",
+                        f"配件情况：{accessories}",
+                        defect_statement,
+                        "适合想要信息透明、快速确认细节的买家。",
+                    ]
+                ),
+                "tags": self._platform_tags(keywords, ["验机友好", "信息透明"]),
+            },
+            {
+                "platform": "xiaohongshu",
+                "platform_label": PLATFORM_LABELS["xiaohongshu"],
+                "title": f"闲置分享｜{product}",
+                "body": "\n".join(
+                    [
+                        f"整理闲置时翻到 {product}，准备转给更需要的人。",
+                        f"我会比较在意把信息说清楚：{deal_text}，当前{price_text}。",
+                        f"实际状态是 {state.get('visible_condition') or '轻微使用痕迹'}，{state.get('functional_status') or '功能状态按实描述'}。",
+                        f"{defect_statement}",
+                        f"配件：{accessories}。感兴趣可以先看细节图再决定。",
+                    ]
+                ),
+                "tags": self._platform_tags(keywords, ["闲置转让", "好物循环"]),
+            },
+        ]
+
+    def _product_name(self, state: dict[str, Any]) -> str:
+        parts = [state.get("brand"), state.get("model") or state.get("product_type")]
+        product = " ".join(str(part).strip() for part in parts if str(part or "").strip())
+        return product or CATEGORY_LABELS.get(state.get("category"), "闲置商品")
+
+    def _platform_tags(self, keywords: list[str], extra: list[str]) -> list[str]:
+        return list(dict.fromkeys([*keywords, *extra]))[:8]
 
     def _join_list(self, value: Any) -> str:
         if isinstance(value, list):

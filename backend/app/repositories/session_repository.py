@@ -26,6 +26,7 @@ class SessionRepository:
             "price_breakdown": {},
             "keywords": [],
             "photo_suggestions": [],
+            "platform_copies": [],
             "errors": [],
             "trace": [],
         }
