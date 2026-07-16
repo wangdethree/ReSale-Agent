@@ -99,6 +99,52 @@ class SessionRepository:
             )
         return summaries
 
+    def outcome_summary(self, recent_limit: int = 8) -> dict[str, Any]:
+        with get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, category, state_json, updated_at
+                FROM sale_sessions
+                ORDER BY updated_at DESC
+                """
+            ).fetchall()
+
+        outcomes: list[dict[str, Any]] = []
+        for row in rows:
+            state = json.loads(row["state_json"])
+            outcome = state.get("sale_outcome")
+            if not outcome:
+                continue
+            outcomes.append(
+                {
+                    "session_id": row["id"],
+                    "category": row["category"],
+                    "product_label": self._product_label(state),
+                    "final_sold_price": float(outcome["final_sold_price"]),
+                    "sold_channel": outcome.get("sold_channel") or "未填写",
+                    "price_position": outcome.get("price_position") or "暂无",
+                    "price_delta_from_mid": outcome.get("price_delta_from_mid"),
+                    "price_delta_rate": outcome.get("price_delta_rate"),
+                    "updated_at": row["updated_at"],
+                }
+            )
+
+        total_count = len(outcomes)
+        in_range_count = sum(1 for item in outcomes if item["price_position"] == "符合估价区间")
+        deltas = [float(item["price_delta_from_mid"]) for item in outcomes if item["price_delta_from_mid"] is not None]
+        delta_rates = [float(item["price_delta_rate"]) for item in outcomes if item["price_delta_rate"] is not None]
+        total_sold_amount = sum(item["final_sold_price"] for item in outcomes)
+
+        return {
+            "total_count": total_count,
+            "in_range_count": in_range_count,
+            "in_range_rate": round(in_range_count / total_count, 4) if total_count else 0.0,
+            "average_delta_from_mid": round(sum(deltas) / len(deltas), 2) if deltas else None,
+            "average_delta_rate": round(sum(delta_rates) / len(delta_rates), 4) if delta_rates else None,
+            "total_sold_amount": round(total_sold_amount, 2),
+            "recent_outcomes": outcomes[:recent_limit],
+        }
+
     def delete(self, session_id: str) -> None:
         with get_connection() as conn:
             result = conn.execute("DELETE FROM sale_sessions WHERE id = ?", (session_id,))

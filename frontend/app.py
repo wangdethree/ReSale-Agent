@@ -15,6 +15,7 @@ from frontend.api_client import ApiClient
 from frontend.components.confirmation_form import render_confirmation_form
 from frontend.components.negotiation_panel import render_negotiation_panel, render_negotiation_result
 from frontend.components.outcome_panel import render_outcome_panel
+from frontend.components.outcome_summary import render_outcome_summary
 from frontend.components.pricing_card import render_listing
 from frontend.components.question_form import render_question_form
 from frontend.components.upload_panel import CATEGORY_OPTIONS, render_upload_panel
@@ -87,6 +88,12 @@ with st.sidebar:
                 st.rerun()
         else:
             st.caption("暂无草稿")
+
+    st.divider()
+    try:
+        render_outcome_summary(client.outcome_summary())
+    except RuntimeError as exc:
+        st.caption(f"成交复盘暂不可用：{exc}")
 
 
 try:

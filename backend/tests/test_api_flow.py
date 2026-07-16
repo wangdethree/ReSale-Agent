@@ -72,6 +72,14 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert sale_outcome["price_position"] == "符合估价区间"
         assert sale_outcome["price_delta_from_mid"] != 0
 
+        outcome_summary = client.get("/api/v1/sessions/outcomes/summary")
+        assert outcome_summary.status_code == 200
+        summary_json = outcome_summary.json()
+        assert summary_json["total_count"] == 1
+        assert summary_json["in_range_count"] == 1
+        assert summary_json["recent_outcomes"][0]["session_id"] == session_id
+        assert summary_json["recent_outcomes"][0]["final_sold_price"] == 280
+
         exported = client.get(f"/api/v1/sessions/{session_id}/export")
         assert exported.status_code == 200
         assert "# 闲置 Keychron K2" in exported.text
@@ -89,3 +97,4 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         deleted = client.delete(f"/api/v1/sessions/{session_id}")
         assert deleted.status_code == 204
         assert client.get(f"/api/v1/sessions/{session_id}").status_code == 404
+        assert client.get("/api/v1/sessions/outcomes/summary").json()["total_count"] == 0

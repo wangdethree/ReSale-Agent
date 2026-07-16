@@ -72,6 +72,28 @@ class SaleOutcomeRequest(BaseModel):
     sale_notes: str | None = None
 
 
+class OutcomeSummaryItem(BaseModel):
+    session_id: str
+    category: Category
+    product_label: str
+    final_sold_price: float
+    sold_channel: str
+    price_position: str
+    price_delta_from_mid: float | None = None
+    price_delta_rate: float | None = None
+    updated_at: str
+
+
+class OutcomeSummaryResponse(BaseModel):
+    total_count: int
+    in_range_count: int
+    in_range_rate: float
+    average_delta_from_mid: float | None = None
+    average_delta_rate: float | None = None
+    total_sold_amount: float
+    recent_outcomes: list[OutcomeSummaryItem]
+
+
 class SimilarItem(BaseModel):
     id: int
     category: Category

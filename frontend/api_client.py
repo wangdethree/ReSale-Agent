@@ -36,6 +36,11 @@ class ApiClient:
         self._raise_for_status(response)
         return response.json()
 
+    def outcome_summary(self) -> dict[str, Any]:
+        response = requests.get(f"{API_BASE_URL}/sessions/outcomes/summary", timeout=15)
+        self._raise_for_status(response)
+        return response.json()
+
     def get_session(self, session_id: str) -> dict[str, Any]:
         response = requests.get(f"{API_BASE_URL}/sessions/{session_id}", timeout=15)
         self._raise_for_status(response)

@@ -8,6 +8,7 @@ from backend.app.models.schemas import (
     AnswerRequest,
     ConfirmRequest,
     NextQuestionResponse,
+    OutcomeSummaryResponse,
     SaleOutcomeRequest,
     SaleStateResponse,
     SessionCreate,
@@ -32,6 +33,11 @@ def create_session(payload: SessionCreate) -> SaleStateResponse:
 @router.get("", response_model=list[SessionSummary])
 def list_sessions() -> list[SessionSummary]:
     return [SessionSummary(**item) for item in repo.list_recent()]
+
+
+@router.get("/outcomes/summary", response_model=OutcomeSummaryResponse)
+def get_outcome_summary() -> OutcomeSummaryResponse:
+    return OutcomeSummaryResponse(**repo.outcome_summary())
 
 
 @router.get("/{session_id}", response_model=SaleStateResponse)
