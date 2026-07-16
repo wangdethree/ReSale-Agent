@@ -36,11 +36,24 @@ REQUIRED_FIELDS: dict[str, list[str]] = {
         "additional_defects",
         "delivery_options",
     ],
+    "clothing": [
+        "product_type",
+        "brand",
+        "model",
+        "size",
+        "material",
+        "original_price",
+        "purchase_date",
+        "wear_status",
+        "wash_status",
+        "additional_defects",
+        "delivery_options",
+    ],
 }
 
 
 FIELD_QUESTIONS: dict[str, str] = {
-    "product_type": "这件商品的具体类型是什么？例如机械键盘、Python 图书、桌面风扇。",
+    "product_type": "这件商品的具体类型是什么？例如机械键盘、Python 图书、桌面风扇、连帽卫衣。",
     "brand": "商品品牌是什么？如果不确定，可以填写“不确定”。",
     "model": "商品型号、版本或 ISBN 是什么？如果不知道，可以填写“不确定”。",
     "original_price": "这件商品的原价大约是多少元？",
@@ -53,6 +66,10 @@ FIELD_QUESTIONS: dict[str, str] = {
     "notes_status": "书内是否有笔记、划线或签名？",
     "damage_status": "是否有缺页、污损、开胶或明显破损？",
     "delivery_options": "支持邮寄还是自提？是否有原包装方便运输？",
+    "size": "尺码是多少？例如 S、M、L、42 码或均码。",
+    "material": "主要材质是什么？例如纯棉、羊毛、聚酯纤维、皮革。",
+    "wear_status": "穿着频率和当前状态如何？例如穿过 3 次、轻微起球、无变形。",
+    "wash_status": "是否已清洗或干洗？是否有缩水、掉色或染色情况？",
 }
 
 
@@ -80,4 +97,3 @@ def find_missing_fields(category: str, product_data: dict[str, Any]) -> list[str
 
 def get_question_for_field(field: str) -> str:
     return FIELD_QUESTIONS.get(field, f"请补充 {field} 的信息。")
-

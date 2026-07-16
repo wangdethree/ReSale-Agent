@@ -18,7 +18,7 @@ class PricingService:
         original_price = float(state.get("original_price") or 0)
         age_months = calculate_age_months(state.get("purchase_date"))
         condition = state.get("visible_condition") or "轻微使用痕迹"
-        functional_status = state.get("functional_status") or "功能正常"
+        functional_status = state.get("functional_status") or state.get("wear_status") or "功能正常"
         accessories_complete = _list_has_value(state.get("accessories"))
         has_repair_history = parse_repair_history(state.get("repair_history"))
         similar_prices = [float(item["sold_price"]) for item in similar_items]
@@ -33,4 +33,3 @@ class PricingService:
             similar_prices=similar_prices,
         )
         return result
-

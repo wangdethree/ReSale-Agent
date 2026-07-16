@@ -36,6 +36,10 @@ PRODUCT_FIELDS = [
     "set_status",
     "notes_status",
     "damage_status",
+    "size",
+    "material",
+    "wear_status",
+    "wash_status",
 ]
 
 

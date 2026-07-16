@@ -32,3 +32,10 @@ def test_book_has_category_specific_required_fields() -> None:
     assert "notes_status" in missing
     assert "repair_history" not in missing
 
+
+def test_clothing_requires_size_and_wear_details() -> None:
+    missing = find_missing_fields("clothing", {"category": "clothing", "product_type": "hoodie"})
+    assert "size" in missing
+    assert "wear_status" in missing
+    assert "wash_status" in missing
+    assert "repair_history" not in missing

@@ -110,6 +110,8 @@ class VisionService:
             base.update(self._infer_book(filename_text))
         elif category == "appliance":
             base.update(self._infer_appliance(filename_text))
+        elif category == "clothing":
+            base.update(self._infer_clothing(filename_text))
 
         return ProductConfirmation(**base)
 
@@ -149,3 +151,17 @@ class VisionService:
                 "vision_confidence": 0.72,
             }
         return {"product_type": "appliance", "brand": None, "model": None}
+
+    def _infer_clothing(self, text: str) -> dict[str, object]:
+        if "uniqlo" in text or "hoodie" in text or "卫衣" in text:
+            return {
+                "product_type": "hoodie",
+                "brand": "Uniqlo",
+                "model": "U 系列连帽卫衣",
+                "color": "gray",
+                "visible_defects": ["袖口或下摆可能有轻微使用痕迹"],
+                "vision_confidence": 0.68,
+            }
+        if "nike" in text or "sneaker" in text or "shoe" in text:
+            return {"product_type": "sneakers", "brand": "Nike", "model": "Air Force 1"}
+        return {"product_type": "clothing", "brand": None, "model": None}

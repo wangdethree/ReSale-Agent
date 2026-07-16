@@ -47,11 +47,30 @@ def create_tables(conn: Connection) -> None:
 
 
 def seed_reference_items(conn: Connection) -> None:
-    existing = conn.execute("SELECT COUNT(*) AS count FROM reference_items").fetchone()["count"]
-    if existing:
-        return
+    existing_rows = conn.execute(
+        """
+        SELECT category, product_type, brand, model, condition_level
+        FROM reference_items
+        """
+    ).fetchall()
+    existing_keys = {
+        (
+            row["category"],
+            row["product_type"],
+            row["brand"],
+            row["model"],
+            row["condition_level"],
+        )
+        for row in existing_rows
+    }
 
-    items = get_seed_items()
+    items = [
+        item
+        for item in get_seed_items()
+        if (item.category, item.product_type, item.brand, item.model, item.condition_level) not in existing_keys
+    ]
+    if not items:
+        return
     conn.executemany(
         """
         INSERT INTO reference_items (
@@ -88,4 +107,3 @@ def init_database() -> None:
 if __name__ == "__main__":
     init_database()
     print("ReSale Agent 数据库初始化完成。")
-

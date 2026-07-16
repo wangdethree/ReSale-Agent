@@ -65,6 +65,29 @@
       "additional_defects": ["底座轻微划痕，不影响使用"],
       "delivery_options": "支持同城自提，也可以邮寄"
     }
+  },
+  {
+    "name": "优衣库连帽卫衣",
+    "category": "clothing",
+    "buyer_message": "衣服起球明显吗？",
+    "expected_title_keyword": "Uniqlo",
+    "product": {
+      "category": "clothing",
+      "product_type": "hoodie",
+      "brand": "Uniqlo",
+      "model": "U 系列连帽卫衣 M",
+      "color": "gray",
+      "visible_condition": "轻微使用痕迹",
+      "visible_defects": ["袖口有轻微使用痕迹"],
+      "vision_confidence": 0.74,
+      "original_price": 299,
+      "purchase_date": "2024-11",
+      "size": "M",
+      "material": "棉混纺",
+      "wear_status": "穿过约 5 次，版型正常，无明显变形",
+      "wash_status": "已清洗，无缩水无染色",
+      "additional_defects": ["袖口轻微使用痕迹，已拍细节图"],
+      "delivery_options": "支持邮寄，衣物会简单防尘包装"
+    }
   }
 ]
-

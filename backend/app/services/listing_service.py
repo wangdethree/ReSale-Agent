@@ -9,6 +9,7 @@ CATEGORY_LABELS = {
     "digital": "数码产品",
     "book": "图书",
     "appliance": "小家电",
+    "clothing": "服装",
 }
 
 PLATFORM_LABELS = {
@@ -72,6 +73,10 @@ class ListingService:
             "repair_history": state.get("repair_history"),
             "accessories": state.get("accessories", []),
             "delivery_options": state.get("delivery_options"),
+            "size": state.get("size"),
+            "material": state.get("material"),
+            "wear_status": state.get("wear_status"),
+            "wash_status": state.get("wash_status"),
             "template": template,
         }
         result = TextModelService().generate_json(
@@ -109,13 +114,23 @@ class ListingService:
         lines = [
             f"出一件自用闲置 {brand_model or CATEGORY_LABELS.get(state.get('category'), '商品')}。",
             f"购买时间：{state.get('purchase_date') or '见补充说明'}，原价约 {state.get('original_price') or '未填写'} 元。",
-            f"功能状态：{state.get('functional_status') or '已按实际情况填写'}。",
-            f"维修记录：{state.get('repair_history') or '未发现维修记录'}。",
-            f"配件情况：{self._join_list(state.get('accessories')) or '按现有配件出售'}。",
+            *self._condition_lines(state),
             defect_statement,
             "价格已参考本地模拟相似商品和规则折旧，欢迎合理沟通。",
         ]
         return "\n".join(lines)
+
+    def _condition_lines(self, state: dict[str, Any]) -> list[str]:
+        if state.get("category") == "clothing":
+            return [
+                f"尺码/材质：{state.get('size') or '未填写'}，{state.get('material') or '未填写'}。",
+                f"穿着清洗：{state.get('wear_status') or '已按实际情况填写'}；{state.get('wash_status') or '未补充'}。",
+            ]
+        return [
+            f"功能状态：{state.get('functional_status') or '已按实际情况填写'}。",
+            f"维修记录：{state.get('repair_history') or '未发现维修记录'}。",
+            f"配件情况：{self._join_list(state.get('accessories')) or '按现有配件出售'}。",
+        ]
 
     def _defect_statement(self, defects: list[str]) -> str:
         clean = [defect.strip() for defect in defects if str(defect).strip() and str(defect).strip() != "无"]
@@ -137,6 +152,8 @@ class ListingService:
             return [*common, "补一张通电或功能正常的展示图"]
         if category == "book":
             return [*common, "补一张目录页、笔记页或版本信息图"]
+        if category == "clothing":
+            return [*common, "补一张尺码标、面料标和上身/平铺效果图"]
         return [*common, "补一张铭牌参数或通电状态图"]
 
     def _platform_copies(self, state: dict[str, Any], listing: dict[str, Any]) -> list[dict[str, Any]]:
@@ -151,6 +168,7 @@ class ListingService:
         delivery = state.get("delivery_options") or "支持当面或邮寄，具体可沟通"
         product = self._product_name(state)
         accessories = self._join_list(state.get("accessories")) or "按现有配件出售"
+        status_label, status_value = self._status_label_and_value(state)
 
         return [
             {
@@ -160,7 +178,7 @@ class ListingService:
                 "body": "\n".join(
                     [
                         f"自用闲置 {product} 出手，{price_text}。",
-                        f"成色：{state.get('visible_condition') or '轻微使用痕迹'}，功能：{state.get('functional_status') or '按实际情况说明'}。",
+                        f"成色：{state.get('visible_condition') or '轻微使用痕迹'}，{status_label}：{status_value}。",
                         f"配件：{accessories}。",
                         defect_statement,
                         f"{deal_text}，接受合理沟通，低价离谱就不接了。",
@@ -178,7 +196,7 @@ class ListingService:
                         f"商品：{product}",
                         f"建议价格：{price_text}，{deal_text}",
                         f"购买时间：{state.get('purchase_date') or '见补充说明'}",
-                        f"功能状态：{state.get('functional_status') or '已按实际情况说明'}",
+                        f"{status_label}：{status_value}",
                         f"配件情况：{accessories}",
                         defect_statement,
                         "适合想要信息透明、快速确认细节的买家。",
@@ -194,7 +212,7 @@ class ListingService:
                     [
                         f"整理闲置时翻到 {product}，准备转给更需要的人。",
                         f"我会比较在意把信息说清楚：{deal_text}，当前{price_text}。",
-                        f"实际状态是 {state.get('visible_condition') or '轻微使用痕迹'}，{state.get('functional_status') or '功能状态按实描述'}。",
+                        f"实际状态是 {state.get('visible_condition') or '轻微使用痕迹'}，{status_value}。",
                         f"{defect_statement}",
                         f"配件：{accessories}。感兴趣可以先看细节图再决定。",
                     ]
@@ -207,6 +225,11 @@ class ListingService:
         parts = [state.get("brand"), state.get("model") or state.get("product_type")]
         product = " ".join(str(part).strip() for part in parts if str(part or "").strip())
         return product or CATEGORY_LABELS.get(state.get("category"), "闲置商品")
+
+    def _status_label_and_value(self, state: dict[str, Any]) -> tuple[str, str]:
+        if state.get("category") == "clothing":
+            return "穿着状态", str(state.get("wear_status") or "按实际情况说明")
+        return "功能", str(state.get("functional_status") or "按实际情况说明")
 
     def _platform_tags(self, keywords: list[str], extra: list[str]) -> list[str]:
         return list(dict.fromkeys([*keywords, *extra]))[:8]

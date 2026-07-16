@@ -7,6 +7,7 @@ CATEGORY_OPTIONS = {
     "digital": "数码产品",
     "book": "图书",
     "appliance": "小家电",
+    "clothing": "服装",
 }
 
 
@@ -30,4 +31,3 @@ def render_upload_panel() -> tuple[str, list[object]]:
             with cols[index % len(cols)]:
                 st.image(file, use_container_width=True)
     return category, list(files or [])
-

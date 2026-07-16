@@ -12,6 +12,7 @@ CATEGORY_LABELS = {
     "digital": "数码产品",
     "book": "图书",
     "appliance": "小家电",
+    "clothing": "服装",
 }
 
 

@@ -113,6 +113,40 @@ def _appliance_items() -> list[ReferenceItem]:
     return items
 
 
-def get_seed_items() -> list[ReferenceItem]:
-    return [*_digital_items(), *_book_items(), *_appliance_items()]
+def _clothing_items() -> list[ReferenceItem]:
+    clothes = [
+        ("hoodie", "Uniqlo", "U 系列连帽卫衣 M", 299),
+        ("coat", "Zara", "羊毛混纺大衣 S", 899),
+        ("sneakers", "Nike", "Air Force 1 42", 749),
+        ("backpack", "Herschel", "Little America", 899),
+        ("dress", "UR", "法式连衣裙 M", 399),
+    ]
+    conditions = [
+        ("接近全新", 3, 0.62, True, "穿着次数少，版型保持较好。"),
+        ("轻微使用痕迹", 10, 0.45, True, "正常穿着清洗，有轻微使用痕迹。"),
+        ("明显使用痕迹", 20, 0.30, False, "局部有磨损或轻微起球，已如实说明。"),
+    ]
+    items: list[ReferenceItem] = []
+    for product_type, brand, model, original in clothes:
+        for condition, months, ratio, accessories, description in conditions:
+            sold_price = round(original * ratio)
+            items.append(
+                ReferenceItem(
+                    category="clothing",
+                    product_type=product_type,
+                    brand=brand,
+                    model=model,
+                    condition_level=condition,
+                    age_months=months,
+                    original_price=original,
+                    listing_price=round(sold_price * 1.12),
+                    sold_price=sold_price,
+                    accessories_complete=accessories,
+                    description=description,
+                )
+            )
+    return items
 
+
+def get_seed_items() -> list[ReferenceItem]:
+    return [*_digital_items(), *_book_items(), *_appliance_items(), *_clothing_items()]
