@@ -145,6 +145,15 @@ class ApiClient:
         self._raise_for_status(response)
         return response.json()
 
+    def export_market_data_audit(self, export_format: str = "csv") -> str:
+        response = requests.get(
+            f"{API_BASE_URL}/market-data/audit/export",
+            params={"format": export_format},
+            timeout=15,
+        )
+        self._raise_for_status(response)
+        return response.text
+
     def delete_market_data_sample(self, item_id: int) -> None:
         response = requests.delete(f"{API_BASE_URL}/market-data/samples/{item_id}", timeout=15)
         self._raise_for_status(response)

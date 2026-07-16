@@ -125,5 +125,16 @@ def test_market_data_import_feeds_local_similarity(monkeypatch, tmp_path) -> Non
         assert delete_event["item_id"] == imported_item["id"]
         assert delete_event["detail"]["before"]["source_name"] == "测试授权表"
 
+        audit_csv = client.get("/api/v1/market-data/audit/export", params={"format": "csv"})
+        assert audit_csv.status_code == 200
+        assert "event_id,item_id,action,action_label" in audit_csv.text
+        assert "delete" in audit_csv.text
+        assert "测试授权表" in audit_csv.text
+
+        audit_markdown = client.get("/api/v1/market-data/audit/export", params={"format": "markdown"})
+        assert audit_markdown.status_code == 200
+        assert "# 价格样本审计记录" in audit_markdown.text
+        assert "删除导入样本" in audit_markdown.text
+
     results_after_delete = search_similar_items("digital", "mechanical_keyboard", "Keychron", "K2", limit=1)
     assert results_after_delete[0]["source_type"] == "seed"

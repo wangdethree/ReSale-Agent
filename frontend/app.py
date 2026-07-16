@@ -174,7 +174,14 @@ with st.sidebar:
             active={"active": True, "inactive": False}.get(market_active),
         )
         market_audit = client.market_data_audit(limit=10)
-        import_payload, update_sample_payload, delete_sample_id = render_market_data_panel(market_samples, market_audit)
+        audit_csv = client.export_market_data_audit("csv")
+        audit_markdown = client.export_market_data_audit("markdown")
+        import_payload, update_sample_payload, delete_sample_id = render_market_data_panel(
+            market_samples,
+            market_audit,
+            audit_csv,
+            audit_markdown,
+        )
         if import_payload:
             import_result = client.import_market_data_csv(import_payload["file"], import_payload["source_name"])
             render_market_data_import_result(import_result)

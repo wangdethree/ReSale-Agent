@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, File, Form, Query, UploadFile
+from typing import Literal
+
+from fastapi import APIRouter, File, Form, Query, Response, UploadFile
 
 from backend.app.core.exceptions import AppError
 from backend.app.models.schemas import (
@@ -14,6 +16,7 @@ from backend.app.models.schemas import (
     MarketSampleSourceType,
 )
 from backend.app.repositories.product_repository import ProductRepository
+from backend.app.services.market_data_export_service import MarketDataExportService
 from backend.app.services.market_data_import_service import MarketDataImportService
 
 
@@ -28,6 +31,30 @@ def list_market_data_audit(
     limit: int = Query(default=30, ge=1, le=100),
 ) -> MarketDataAuditResponse:
     return MarketDataAuditResponse(**repo.list_sample_events(item_id=item_id, action=action, limit=limit))
+
+
+@router.get("/audit/export")
+def export_market_data_audit(
+    item_id: int | None = Query(default=None),
+    action: MarketSampleAction | None = Query(default=None),
+    export_format: Literal["csv", "markdown"] = Query(default="csv", alias="format"),
+    limit: int = Query(default=500, ge=1, le=5000),
+) -> Response:
+    events = repo.list_sample_events(item_id=item_id, action=action, limit=limit)["items"]
+    service = MarketDataExportService()
+    if export_format == "markdown":
+        body = service.build_audit_markdown(events)
+        return Response(
+            content=body,
+            media_type="text/markdown; charset=utf-8",
+            headers={"Content-Disposition": 'attachment; filename="market-data-audit.md"'},
+        )
+    body = service.build_audit_csv(events)
+    return Response(
+        content=body,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="market-data-audit.csv"'},
+    )
 
 
 @router.get("/samples", response_model=MarketDataListResponse)

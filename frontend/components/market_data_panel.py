@@ -19,6 +19,8 @@ ACTION_LABELS = {
 def render_market_data_panel(
     samples: dict[str, Any],
     audit: dict[str, Any],
+    audit_csv: str,
+    audit_markdown: str,
 ) -> tuple[dict[str, Any] | None, dict[str, Any] | None, int | None]:
     import_payload: dict[str, Any] | None = None
     update_payload: dict[str, Any] | None = None
@@ -97,6 +99,21 @@ def render_market_data_panel(
             st.write("最近操作")
             for event in events[:6]:
                 st.caption(_audit_label(event))
+            cols = st.columns(2)
+            cols[0].download_button(
+                "导出 CSV",
+                audit_csv,
+                file_name="market-data-audit.csv",
+                mime="text/csv",
+                key="market-data-audit-csv",
+            )
+            cols[1].download_button(
+                "导出 Markdown",
+                audit_markdown,
+                file_name="market-data-audit.md",
+                mime="text/markdown",
+                key="market-data-audit-md",
+            )
     return import_payload, update_payload, delete_id
 
 
