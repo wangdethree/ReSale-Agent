@@ -114,6 +114,8 @@ class VisionService:
             base.update(self._infer_clothing(filename_text))
         elif category == "furniture":
             base.update(self._infer_furniture(filename_text))
+        elif category == "shoe_bag":
+            base.update(self._infer_shoe_bag(filename_text))
 
         return ProductConfirmation(**base)
 
@@ -181,3 +183,23 @@ class VisionService:
         if "chair" in text or "椅" in text:
             return {"product_type": "chair", "brand": "Hbada", "model": "人体工学电脑椅"}
         return {"product_type": "furniture", "brand": None, "model": None}
+
+    def _infer_shoe_bag(self, text: str) -> dict[str, object]:
+        if "nike" in text or "airforce" in text or "air_force" in text or "sneaker" in text or "shoe" in text:
+            return {
+                "product_type": "sneakers",
+                "brand": "Nike",
+                "model": "Air Force 1",
+                "color": "white",
+                "visible_defects": ["鞋面或鞋底可能有轻微使用痕迹"],
+                "vision_confidence": 0.68,
+            }
+        if "coach" in text or "tote" in text or "bag" in text or "包" in text:
+            return {
+                "product_type": "tote_bag",
+                "brand": "Coach",
+                "model": "Field Tote 22",
+                "visible_defects": ["包角或五金可能有轻微使用痕迹"],
+                "vision_confidence": 0.64,
+            }
+        return {"product_type": "shoe_bag", "brand": None, "model": None}

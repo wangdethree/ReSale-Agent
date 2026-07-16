@@ -5,7 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator
 
 
-Category = Literal["digital", "book", "appliance", "clothing", "furniture"]
+Category = Literal["digital", "book", "appliance", "clothing", "furniture", "shoe_bag"]
 
 
 class SessionCreate(BaseModel):
@@ -55,6 +55,8 @@ class ProductConfirmation(BaseModel):
     dimensions: str | None = None
     installation_status: str | None = None
     pickup_requirement: str | None = None
+    clean_status: str | None = None
+    authenticity_status: str | None = None
 
 
 class ConfirmRequest(BaseModel):

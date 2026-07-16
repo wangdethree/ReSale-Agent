@@ -114,5 +114,31 @@
       "pickup_requirement": "建议同城自提，小区有电梯，买家需自备搬运袋或推车",
       "delivery_options": "仅支持同城自提，可协助提前拆好"
     }
+  },
+  {
+    "name": "Nike Air Force 1",
+    "category": "shoe_bag",
+    "buyer_message": "鞋底磨损明显吗？可以验货吗？",
+    "expected_title_keyword": "Nike",
+    "product": {
+      "category": "shoe_bag",
+      "product_type": "sneakers",
+      "brand": "Nike",
+      "model": "Air Force 1 42",
+      "color": "white",
+      "visible_condition": "轻微使用痕迹",
+      "visible_defects": ["鞋头内侧有轻微折痕"],
+      "vision_confidence": 0.73,
+      "original_price": 749,
+      "purchase_date": "2024-08",
+      "size": "42",
+      "material": "皮革鞋面",
+      "wear_status": "穿过约 8 次，鞋底正常磨损，鞋面无破损",
+      "clean_status": "鞋面和鞋底已简单清洁",
+      "authenticity_status": "官网购入，盒标和订单截图可一起提供，支持当面验货",
+      "accessories": ["原鞋盒", "备用鞋带"],
+      "additional_defects": ["鞋头内侧轻微折痕，鞋底有正常使用痕迹"],
+      "delivery_options": "支持邮寄或同城当面验货"
+    }
   }
 ]

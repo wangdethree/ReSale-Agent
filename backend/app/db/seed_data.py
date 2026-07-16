@@ -183,5 +183,48 @@ def _furniture_items() -> list[ReferenceItem]:
     return items
 
 
+def _shoe_bag_items() -> list[ReferenceItem]:
+    products = [
+        ("sneakers", "Nike", "Air Force 1 42", 749),
+        ("running_shoes", "Adidas", "Ultraboost 22 41", 1299),
+        ("leather_shoes", "Clarks", "Desert Boot 42", 1399),
+        ("backpack", "Herschel", "Little America", 899),
+        ("tote_bag", "Coach", "Field Tote 22", 2950),
+        ("crossbody_bag", "Furla", "Metropolis Mini", 2680),
+    ]
+    conditions = [
+        ("接近全新", 4, 0.66, True, "使用次数少，鞋底或包角磨损轻微。"),
+        ("轻微使用痕迹", 12, 0.48, True, "正常使用，有轻微折痕、压痕或边角痕迹。"),
+        ("明显使用痕迹", 24, 0.32, False, "鞋底、包角或五金磨损较明显，已如实说明。"),
+    ]
+    items: list[ReferenceItem] = []
+    for product_type, brand, model, original in products:
+        for condition, months, ratio, accessories, description in conditions:
+            sold_price = round(original * ratio)
+            items.append(
+                ReferenceItem(
+                    category="shoe_bag",
+                    product_type=product_type,
+                    brand=brand,
+                    model=model,
+                    condition_level=condition,
+                    age_months=months,
+                    original_price=original,
+                    listing_price=round(sold_price * 1.12),
+                    sold_price=sold_price,
+                    accessories_complete=accessories,
+                    description=description,
+                )
+            )
+    return items
+
+
 def get_seed_items() -> list[ReferenceItem]:
-    return [*_digital_items(), *_book_items(), *_appliance_items(), *_clothing_items(), *_furniture_items()]
+    return [
+        *_digital_items(),
+        *_book_items(),
+        *_appliance_items(),
+        *_clothing_items(),
+        *_furniture_items(),
+        *_shoe_bag_items(),
+    ]

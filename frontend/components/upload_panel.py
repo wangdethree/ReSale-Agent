@@ -9,6 +9,7 @@ CATEGORY_OPTIONS = {
     "appliance": "小家电",
     "clothing": "服装",
     "furniture": "家具",
+    "shoe_bag": "鞋包",
 }
 
 

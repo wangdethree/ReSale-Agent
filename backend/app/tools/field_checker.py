@@ -63,11 +63,26 @@ REQUIRED_FIELDS: dict[str, list[str]] = {
         "pickup_requirement",
         "delivery_options",
     ],
+    "shoe_bag": [
+        "product_type",
+        "brand",
+        "model",
+        "size",
+        "material",
+        "original_price",
+        "purchase_date",
+        "wear_status",
+        "clean_status",
+        "authenticity_status",
+        "accessories",
+        "additional_defects",
+        "delivery_options",
+    ],
 }
 
 
 FIELD_QUESTIONS: dict[str, str] = {
-    "product_type": "这件商品的具体类型是什么？例如机械键盘、Python 图书、桌面风扇、连帽卫衣、书桌。",
+    "product_type": "这件商品的具体类型是什么？例如机械键盘、Python 图书、桌面风扇、连帽卫衣、书桌、运动鞋或单肩包。",
     "brand": "商品品牌是什么？如果不确定，可以填写“不确定”。",
     "model": "商品型号、版本或 ISBN 是什么？如果不知道，可以填写“不确定”。",
     "original_price": "这件商品的原价大约是多少元？",
@@ -87,6 +102,8 @@ FIELD_QUESTIONS: dict[str, str] = {
     "dimensions": "商品尺寸是多少？例如长宽高、座面高度或可折叠后的尺寸。",
     "installation_status": "当前是否已安装？是否方便拆装、是否缺少螺丝或配件？",
     "pickup_requirement": "搬运条件如何？例如是否仅自提、是否有电梯、是否需要买家自备搬运工具。",
+    "clean_status": "当前清洁或保养状态如何？例如已清洁、鞋底已擦拭、皮面定期护理。",
+    "authenticity_status": "购买渠道和真伪情况如何？例如专柜/官网购入、有小票或支持验货。",
 }
 
 

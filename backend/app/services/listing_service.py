@@ -11,6 +11,7 @@ CATEGORY_LABELS = {
     "appliance": "小家电",
     "clothing": "服装",
     "furniture": "家具",
+    "shoe_bag": "鞋包",
 }
 
 PLATFORM_LABELS = {
@@ -81,6 +82,8 @@ class ListingService:
             "dimensions": state.get("dimensions"),
             "installation_status": state.get("installation_status"),
             "pickup_requirement": state.get("pickup_requirement"),
+            "clean_status": state.get("clean_status"),
+            "authenticity_status": state.get("authenticity_status"),
             "template": template,
         }
         result = TextModelService().generate_json(
@@ -136,6 +139,12 @@ class ListingService:
                 f"结构状态：{state.get('functional_status') or '已按实际情况填写'}；{state.get('installation_status') or '安装状态未补充'}。",
                 f"搬运条件：{state.get('pickup_requirement') or '待沟通'}。",
             ]
+        if state.get("category") == "shoe_bag":
+            return [
+                f"尺码/材质：{state.get('size') or '未填写'}，{state.get('material') or '未填写'}。",
+                f"使用清洁：{state.get('wear_status') or '已按实际情况填写'}；{state.get('clean_status') or '清洁状态未补充'}。",
+                f"渠道验货：{state.get('authenticity_status') or '购买渠道和验货情况待补充'}。",
+            ]
         return [
             f"功能状态：{state.get('functional_status') or '已按实际情况填写'}。",
             f"维修记录：{state.get('repair_history') or '未发现维修记录'}。",
@@ -166,6 +175,8 @@ class ListingService:
             return [*common, "补一张尺码标、面料标和上身/平铺效果图"]
         if category == "furniture":
             return [*common, "补一张尺寸参照图、边角瑕疵图和拆装连接处细节图"]
+        if category == "shoe_bag":
+            return [*common, "补一张鞋底/包角磨损图、尺码标和购买凭证或防伪细节图"]
         return [*common, "补一张铭牌参数或通电状态图"]
 
     def _platform_copies(self, state: dict[str, Any], listing: dict[str, Any]) -> list[dict[str, Any]]:
@@ -242,6 +253,8 @@ class ListingService:
     def _status_label_and_value(self, state: dict[str, Any]) -> tuple[str, str]:
         if state.get("category") == "clothing":
             return "穿着状态", str(state.get("wear_status") or "按实际情况说明")
+        if state.get("category") == "shoe_bag":
+            return "使用状态", str(state.get("wear_status") or "按实际情况说明")
         if state.get("category") == "furniture":
             return "结构状态", str(state.get("functional_status") or "按实际情况说明")
         return "功能", str(state.get("functional_status") or "按实际情况说明")
@@ -249,6 +262,9 @@ class ListingService:
     def _detail_label_and_value(self, state: dict[str, Any], accessories: str) -> tuple[str, str]:
         if state.get("category") == "clothing":
             return "尺码/材质", f"{state.get('size') or '未填写'}，{state.get('material') or '未填写'}"
+        if state.get("category") == "shoe_bag":
+            authenticity = state.get("authenticity_status") or "购买渠道和验货情况待补充"
+            return "尺码/验货", f"{state.get('size') or '未填写'}，{authenticity}"
         if state.get("category") == "furniture":
             pickup = state.get("pickup_requirement") or state.get("delivery_options") or "搬运方式待沟通"
             return "尺寸/搬运", f"{state.get('dimensions') or '未填写'}，{pickup}"

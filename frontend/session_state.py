@@ -43,6 +43,8 @@ PRODUCT_FIELDS = [
     "dimensions",
     "installation_status",
     "pickup_requirement",
+    "clean_status",
+    "authenticity_status",
 ]
 
 

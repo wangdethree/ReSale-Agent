@@ -47,3 +47,13 @@ def test_search_supports_furniture_category(monkeypatch, tmp_path) -> None:
 
     assert results
     assert all(item["category"] == "furniture" for item in results)
+
+
+def test_search_supports_shoe_bag_category(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("RESALE_AGENT_DB_PATH", str(tmp_path / "resale.db"))
+    init_database()
+
+    results = search_similar_items("shoe_bag", "sneakers", "Nike", None, limit=5)
+
+    assert results
+    assert all(item["category"] == "shoe_bag" for item in results)

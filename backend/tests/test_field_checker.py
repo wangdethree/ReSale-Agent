@@ -47,3 +47,11 @@ def test_furniture_requires_dimensions_and_pickup_details() -> None:
     assert "installation_status" in missing
     assert "pickup_requirement" in missing
     assert "wash_status" not in missing
+
+
+def test_shoe_bag_requires_clean_and_authenticity_details() -> None:
+    missing = find_missing_fields("shoe_bag", {"category": "shoe_bag", "product_type": "sneakers"})
+    assert "size" in missing
+    assert "clean_status" in missing
+    assert "authenticity_status" in missing
+    assert "repair_history" not in missing

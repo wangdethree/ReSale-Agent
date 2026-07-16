@@ -88,3 +88,15 @@ def test_vision_service_furniture_fallback(monkeypatch, tmp_path) -> None:
     assert result.brand == "IKEA"
     assert result.product_type == "desk"
     assert result.visible_defects
+
+
+def test_vision_service_shoe_bag_fallback(monkeypatch, tmp_path) -> None:
+    image_path = tmp_path / "nike_airforce_shoe.jpg"
+    image_path.write_bytes(b"fake image bytes")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    result = VisionService().analyze_images("shoe_bag", [str(image_path)])
+
+    assert result.brand == "Nike"
+    assert result.product_type == "sneakers"
+    assert result.visible_defects
