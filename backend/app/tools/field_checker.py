@@ -49,11 +49,25 @@ REQUIRED_FIELDS: dict[str, list[str]] = {
         "additional_defects",
         "delivery_options",
     ],
+    "furniture": [
+        "product_type",
+        "brand",
+        "model",
+        "dimensions",
+        "material",
+        "original_price",
+        "purchase_date",
+        "functional_status",
+        "installation_status",
+        "additional_defects",
+        "pickup_requirement",
+        "delivery_options",
+    ],
 }
 
 
 FIELD_QUESTIONS: dict[str, str] = {
-    "product_type": "这件商品的具体类型是什么？例如机械键盘、Python 图书、桌面风扇、连帽卫衣。",
+    "product_type": "这件商品的具体类型是什么？例如机械键盘、Python 图书、桌面风扇、连帽卫衣、书桌。",
     "brand": "商品品牌是什么？如果不确定，可以填写“不确定”。",
     "model": "商品型号、版本或 ISBN 是什么？如果不知道，可以填写“不确定”。",
     "original_price": "这件商品的原价大约是多少元？",
@@ -70,6 +84,9 @@ FIELD_QUESTIONS: dict[str, str] = {
     "material": "主要材质是什么？例如纯棉、羊毛、聚酯纤维、皮革。",
     "wear_status": "穿着频率和当前状态如何？例如穿过 3 次、轻微起球、无变形。",
     "wash_status": "是否已清洗或干洗？是否有缩水、掉色或染色情况？",
+    "dimensions": "商品尺寸是多少？例如长宽高、座面高度或可折叠后的尺寸。",
+    "installation_status": "当前是否已安装？是否方便拆装、是否缺少螺丝或配件？",
+    "pickup_requirement": "搬运条件如何？例如是否仅自提、是否有电梯、是否需要买家自备搬运工具。",
 }
 
 

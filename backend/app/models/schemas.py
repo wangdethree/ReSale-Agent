@@ -5,7 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator
 
 
-Category = Literal["digital", "book", "appliance", "clothing"]
+Category = Literal["digital", "book", "appliance", "clothing", "furniture"]
 
 
 class SessionCreate(BaseModel):
@@ -37,7 +37,7 @@ class ProductConfirmation(BaseModel):
     visible_defects: list[str] = Field(default_factory=list)
     vision_confidence: float | None = Field(default=None, ge=0, le=1)
 
-    # 三类商品共用的补充字段，未知字段会保存在 user_answers。
+    # 多类商品共用的补充字段，未知字段会保存在 user_answers。
     original_price: float | None = Field(default=None, ge=0)
     purchase_date: str | None = None
     functional_status: str | None = None
@@ -52,6 +52,9 @@ class ProductConfirmation(BaseModel):
     material: str | None = None
     wear_status: str | None = None
     wash_status: str | None = None
+    dimensions: str | None = None
+    installation_status: str | None = None
+    pickup_requirement: str | None = None
 
 
 class ConfirmRequest(BaseModel):

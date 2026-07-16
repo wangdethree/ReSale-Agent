@@ -77,3 +77,14 @@ def test_vision_service_falls_back_when_model_fails(monkeypatch, tmp_path) -> No
     assert result.model == "K2"
     assert result.vision_confidence == 0.76
 
+
+def test_vision_service_furniture_fallback(monkeypatch, tmp_path) -> None:
+    image_path = tmp_path / "ikea_desk.jpg"
+    image_path.write_bytes(b"fake image bytes")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    result = VisionService().analyze_images("furniture", [str(image_path)])
+
+    assert result.brand == "IKEA"
+    assert result.product_type == "desk"
+    assert result.visible_defects

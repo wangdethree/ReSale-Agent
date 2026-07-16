@@ -10,6 +10,7 @@ CATEGORY_LABELS = {
     "book": "图书",
     "appliance": "小家电",
     "clothing": "服装",
+    "furniture": "家具",
 }
 
 PLATFORM_LABELS = {
@@ -77,6 +78,9 @@ class ListingService:
             "material": state.get("material"),
             "wear_status": state.get("wear_status"),
             "wash_status": state.get("wash_status"),
+            "dimensions": state.get("dimensions"),
+            "installation_status": state.get("installation_status"),
+            "pickup_requirement": state.get("pickup_requirement"),
             "template": template,
         }
         result = TextModelService().generate_json(
@@ -126,6 +130,12 @@ class ListingService:
                 f"尺码/材质：{state.get('size') or '未填写'}，{state.get('material') or '未填写'}。",
                 f"穿着清洗：{state.get('wear_status') or '已按实际情况填写'}；{state.get('wash_status') or '未补充'}。",
             ]
+        if state.get("category") == "furniture":
+            return [
+                f"尺寸/材质：{state.get('dimensions') or '未填写'}，{state.get('material') or '未填写'}。",
+                f"结构状态：{state.get('functional_status') or '已按实际情况填写'}；{state.get('installation_status') or '安装状态未补充'}。",
+                f"搬运条件：{state.get('pickup_requirement') or '待沟通'}。",
+            ]
         return [
             f"功能状态：{state.get('functional_status') or '已按实际情况填写'}。",
             f"维修记录：{state.get('repair_history') or '未发现维修记录'}。",
@@ -154,6 +164,8 @@ class ListingService:
             return [*common, "补一张目录页、笔记页或版本信息图"]
         if category == "clothing":
             return [*common, "补一张尺码标、面料标和上身/平铺效果图"]
+        if category == "furniture":
+            return [*common, "补一张尺寸参照图、边角瑕疵图和拆装连接处细节图"]
         return [*common, "补一张铭牌参数或通电状态图"]
 
     def _platform_copies(self, state: dict[str, Any], listing: dict[str, Any]) -> list[dict[str, Any]]:
@@ -169,6 +181,7 @@ class ListingService:
         product = self._product_name(state)
         accessories = self._join_list(state.get("accessories")) or "按现有配件出售"
         status_label, status_value = self._status_label_and_value(state)
+        detail_label, detail_value = self._detail_label_and_value(state, accessories)
 
         return [
             {
@@ -179,7 +192,7 @@ class ListingService:
                     [
                         f"自用闲置 {product} 出手，{price_text}。",
                         f"成色：{state.get('visible_condition') or '轻微使用痕迹'}，{status_label}：{status_value}。",
-                        f"配件：{accessories}。",
+                        f"{detail_label}：{detail_value}。",
                         defect_statement,
                         f"{deal_text}，接受合理沟通，低价离谱就不接了。",
                         f"交易方式：{delivery}。",
@@ -197,7 +210,7 @@ class ListingService:
                         f"建议价格：{price_text}，{deal_text}",
                         f"购买时间：{state.get('purchase_date') or '见补充说明'}",
                         f"{status_label}：{status_value}",
-                        f"配件情况：{accessories}",
+                        f"{detail_label}：{detail_value}",
                         defect_statement,
                         "适合想要信息透明、快速确认细节的买家。",
                     ]
@@ -214,7 +227,7 @@ class ListingService:
                         f"我会比较在意把信息说清楚：{deal_text}，当前{price_text}。",
                         f"实际状态是 {state.get('visible_condition') or '轻微使用痕迹'}，{status_value}。",
                         f"{defect_statement}",
-                        f"配件：{accessories}。感兴趣可以先看细节图再决定。",
+                        f"{detail_label}：{detail_value}。感兴趣可以先看细节图再决定。",
                     ]
                 ),
                 "tags": self._platform_tags(keywords, ["闲置转让", "好物循环"]),
@@ -229,7 +242,17 @@ class ListingService:
     def _status_label_and_value(self, state: dict[str, Any]) -> tuple[str, str]:
         if state.get("category") == "clothing":
             return "穿着状态", str(state.get("wear_status") or "按实际情况说明")
+        if state.get("category") == "furniture":
+            return "结构状态", str(state.get("functional_status") or "按实际情况说明")
         return "功能", str(state.get("functional_status") or "按实际情况说明")
+
+    def _detail_label_and_value(self, state: dict[str, Any], accessories: str) -> tuple[str, str]:
+        if state.get("category") == "clothing":
+            return "尺码/材质", f"{state.get('size') or '未填写'}，{state.get('material') or '未填写'}"
+        if state.get("category") == "furniture":
+            pickup = state.get("pickup_requirement") or state.get("delivery_options") or "搬运方式待沟通"
+            return "尺寸/搬运", f"{state.get('dimensions') or '未填写'}，{pickup}"
+        return "配件", accessories
 
     def _platform_tags(self, keywords: list[str], extra: list[str]) -> list[str]:
         return list(dict.fromkeys([*keywords, *extra]))[:8]

@@ -13,6 +13,7 @@ CATEGORY_LABELS = {
     "book": "图书",
     "appliance": "小家电",
     "clothing": "服装",
+    "furniture": "家具",
 }
 
 

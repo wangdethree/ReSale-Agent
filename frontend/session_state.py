@@ -40,6 +40,9 @@ PRODUCT_FIELDS = [
     "material",
     "wear_status",
     "wash_status",
+    "dimensions",
+    "installation_status",
+    "pickup_requirement",
 ]
 
 

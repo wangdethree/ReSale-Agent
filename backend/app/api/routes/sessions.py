@@ -116,6 +116,9 @@ def submit_answer(session_id: str, payload: AnswerRequest) -> NextQuestionRespon
         "material",
         "wear_status",
         "wash_status",
+        "dimensions",
+        "installation_status",
+        "pickup_requirement",
     }:
         state[field] = value
     else:

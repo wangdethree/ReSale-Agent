@@ -148,5 +148,40 @@ def _clothing_items() -> list[ReferenceItem]:
     return items
 
 
+def _furniture_items() -> list[ReferenceItem]:
+    furniture = [
+        ("desk", "IKEA", "Micke 米克书桌", 599),
+        ("chair", "Hbada", "人体工学电脑椅", 899),
+        ("shelf", "IKEA", "Kallax 卡莱克置物架", 499),
+        ("coffee_table", "MUJI", "橡木茶几", 1290),
+        ("nightstand", "NITORI", "简约床头柜", 399),
+    ]
+    conditions = [
+        ("接近全新", 6, 0.58, True, "摆放使用时间短，结构稳固，表面干净。"),
+        ("轻微使用痕迹", 18, 0.42, True, "日常使用，有轻微划痕或边角痕迹。"),
+        ("明显使用痕迹", 36, 0.26, False, "表面磨损较明显，建议自提前看细节图。"),
+    ]
+    items: list[ReferenceItem] = []
+    for product_type, brand, model, original in furniture:
+        for condition, months, ratio, accessories, description in conditions:
+            sold_price = round(original * ratio)
+            items.append(
+                ReferenceItem(
+                    category="furniture",
+                    product_type=product_type,
+                    brand=brand,
+                    model=model,
+                    condition_level=condition,
+                    age_months=months,
+                    original_price=original,
+                    listing_price=round(sold_price * 1.10),
+                    sold_price=sold_price,
+                    accessories_complete=accessories,
+                    description=description,
+                )
+            )
+    return items
+
+
 def get_seed_items() -> list[ReferenceItem]:
-    return [*_digital_items(), *_book_items(), *_appliance_items(), *_clothing_items()]
+    return [*_digital_items(), *_book_items(), *_appliance_items(), *_clothing_items(), *_furniture_items()]

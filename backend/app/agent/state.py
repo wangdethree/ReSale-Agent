@@ -8,7 +8,7 @@ class SaleAgentState(TypedDict, total=False):
     current_step: str
 
     image_paths: list[str]
-    category: Literal["digital", "book", "appliance", "clothing"]
+    category: Literal["digital", "book", "appliance", "clothing", "furniture"]
     product_type: str
     brand: str | None
     model: str | None
@@ -27,6 +27,9 @@ class SaleAgentState(TypedDict, total=False):
     material: str | None
     wear_status: str | None
     wash_status: str | None
+    dimensions: str | None
+    installation_status: str | None
+    pickup_requirement: str | None
     user_answers: dict[str, Any]
     confirmed: bool
 
