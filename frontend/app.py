@@ -14,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from frontend.api_client import ApiClient
 from frontend.components.confirmation_form import render_confirmation_form
 from frontend.components.inventory_panel import INVENTORY_STATUS_LABELS, render_inventory_panel, render_inventory_summary
+from frontend.components.market_data_panel import render_market_data_import, render_market_data_import_result
 from frontend.components.negotiation_panel import render_negotiation_panel, render_negotiation_result
 from frontend.components.outcome_panel import CHANNEL_OPTIONS, render_outcome_panel
 from frontend.components.outcome_summary import render_outcome_summary
@@ -145,6 +146,15 @@ with st.sidebar:
         )
     except RuntimeError as exc:
         st.caption(f"库存总览暂不可用：{exc}")
+
+    st.divider()
+    import_payload = render_market_data_import()
+    if import_payload:
+        try:
+            import_result = client.import_market_data_csv(import_payload["file"], import_payload["source_name"])
+            render_market_data_import_result(import_result)
+        except RuntimeError as exc:
+            st.caption(f"价格样本导入失败：{exc}")
 
 
 try:

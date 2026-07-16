@@ -110,6 +110,16 @@ class ApiClient:
         self._raise_for_status(response)
         return response.json()
 
+    def import_market_data_csv(self, file: Any, source_name: str) -> dict[str, Any]:
+        response = requests.post(
+            f"{API_BASE_URL}/market-data/import",
+            data={"source_name": source_name},
+            files={"file": (file.name, file.getvalue(), "text/csv")},
+            timeout=30,
+        )
+        self._raise_for_status(response)
+        return response.json()
+
     def analyze_images(self, session_id: str, files: list[Any]) -> dict[str, Any]:
         multipart = [
             ("files", (file.name, file.getvalue(), file.type or "image/jpeg"))

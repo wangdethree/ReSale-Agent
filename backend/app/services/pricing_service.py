@@ -33,8 +33,12 @@ class PricingService:
             similar_prices=similar_prices,
         )
         image_summary = state.get("image_similarity_summary") or {}
+        imported_count = sum(1 for item in similar_items if item.get("source_type") == "imported")
+        result["price_breakdown"]["imported_sample_count"] = imported_count
+        if imported_count:
+            result["price_reasons"].append(f"融合 {imported_count} 条本地授权导入样本，估价来源更贴近你的数据")
         if image_summary.get("used"):
-            result["price_reasons"].append("相似样本排序参考了本地图片线索，但成交价仍来自本地模拟数据")
+            result["price_reasons"].append("相似样本排序参考了本地图片线索，成交价来自本地样本库")
             result["price_breakdown"]["image_similarity_used"] = True
             result["price_breakdown"]["image_similarity_max_score"] = image_summary.get("max_score", 0)
         else:

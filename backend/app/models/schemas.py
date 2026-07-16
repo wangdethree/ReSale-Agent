@@ -119,6 +119,21 @@ class InventorySummaryResponse(BaseModel):
     items: list[InventorySummaryItem]
 
 
+class MarketDataImportError(BaseModel):
+    row_number: int
+    message: str
+
+
+class MarketDataImportResponse(BaseModel):
+    imported_count: int
+    skipped_count: int
+    error_count: int
+    total_rows: int
+    source_name: str
+    accepted_columns: list[str]
+    errors: list[MarketDataImportError] = Field(default_factory=list)
+
+
 class OutcomeSummaryItem(BaseModel):
     session_id: str
     category: Category
@@ -166,6 +181,9 @@ class SimilarItem(BaseModel):
     sold_price: float
     accessories_complete: bool
     description: str
+    source_name: str | None = None
+    source_type: str | None = None
+    source_url: str | None = None
     text_match_score: int | None = None
     image_similarity_score: int | None = None
     match_reasons: list[str] = Field(default_factory=list)

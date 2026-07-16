@@ -84,7 +84,8 @@ class ExportService:
             (
                 f"- 规则权重 {float(breakdown.get('rule_weight', 0)):.0%}，"
                 f"相似成交权重 {float(breakdown.get('market_weight', 0)):.0%}，"
-                f"相似样本 {breakdown.get('market_sample_count', 0)} 条。"
+                f"相似样本 {breakdown.get('market_sample_count', 0)} 条，"
+                f"其中导入样本 {breakdown.get('imported_sample_count', 0)} 条。"
             ),
             (
                 "- 图片线索："
@@ -116,9 +117,11 @@ class ExportService:
         score_text = f"，图片相似度 {score}" if score else ""
         reasons = "；".join(item.get("match_reasons", []))
         reason_text = f"（{reasons}）" if reasons else ""
+        source = item.get("source_name") or "本地样本库"
         return (
             f"- {item.get('brand', '')} {item.get('model', '')}："
-            f"模拟成交价 {item.get('sold_price')} 元{score_text}，{item.get('description')}{reason_text}"
+            f"成交价 {item.get('sold_price')} 元{score_text}，"
+            f"{item.get('description')}，来源：{source}{reason_text}"
         )
 
     def _build_platform_lines(self, platform_copies: list[dict[str, Any]]) -> list[str]:

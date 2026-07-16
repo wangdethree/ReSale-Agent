@@ -30,7 +30,11 @@ def create_tables(conn: Connection) -> None:
             listing_price REAL NOT NULL,
             sold_price REAL NOT NULL,
             accessories_complete BOOLEAN NOT NULL,
-            description TEXT NOT NULL
+            description TEXT NOT NULL,
+            source_name TEXT DEFAULT '内置模拟数据',
+            source_type TEXT DEFAULT 'seed',
+            source_url TEXT,
+            imported_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS negotiation_messages (
@@ -44,6 +48,21 @@ def create_tables(conn: Connection) -> None:
         );
         """
     )
+
+
+def migrate_reference_items(conn: Connection) -> None:
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(reference_items)").fetchall()}
+    migrations = {
+        "source_name": "ALTER TABLE reference_items ADD COLUMN source_name TEXT DEFAULT '内置模拟数据'",
+        "source_type": "ALTER TABLE reference_items ADD COLUMN source_type TEXT DEFAULT 'seed'",
+        "source_url": "ALTER TABLE reference_items ADD COLUMN source_url TEXT",
+        "imported_at": "ALTER TABLE reference_items ADD COLUMN imported_at DATETIME",
+    }
+    for column, statement in migrations.items():
+        if column not in columns:
+            conn.execute(statement)
+    conn.execute("UPDATE reference_items SET source_name = '内置模拟数据' WHERE source_name IS NULL")
+    conn.execute("UPDATE reference_items SET source_type = 'seed' WHERE source_type IS NULL")
 
 
 def seed_reference_items(conn: Connection) -> None:
@@ -75,8 +94,9 @@ def seed_reference_items(conn: Connection) -> None:
         """
         INSERT INTO reference_items (
             category, product_type, brand, model, condition_level, age_months,
-            original_price, listing_price, sold_price, accessories_complete, description
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            original_price, listing_price, sold_price, accessories_complete, description,
+            source_name, source_type, source_url
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             (
@@ -91,6 +111,9 @@ def seed_reference_items(conn: Connection) -> None:
                 item.sold_price,
                 int(item.accessories_complete),
                 item.description,
+                "内置模拟数据",
+                "seed",
+                None,
             )
             for item in items
         ],
@@ -100,6 +123,7 @@ def seed_reference_items(conn: Connection) -> None:
 def init_database() -> None:
     with get_connection() as conn:
         create_tables(conn)
+        migrate_reference_items(conn)
         seed_reference_items(conn)
         conn.commit()
 

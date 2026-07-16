@@ -29,6 +29,67 @@ def _text_match_reasons(item: dict[str, Any], product_type: str, brand: str | No
 
 
 class ProductRepository:
+    def import_reference_items(self, items: list[dict[str, Any]]) -> dict[str, int]:
+        imported_count = 0
+        skipped_count = 0
+        with get_connection() as conn:
+            for item in items:
+                existing = conn.execute(
+                    """
+                    SELECT id
+                    FROM reference_items
+                    WHERE category = ?
+                      AND product_type = ?
+                      AND COALESCE(brand, '') = COALESCE(?, '')
+                      AND COALESCE(model, '') = COALESCE(?, '')
+                      AND condition_level = ?
+                      AND sold_price = ?
+                      AND description = ?
+                    LIMIT 1
+                    """,
+                    (
+                        item["category"],
+                        item["product_type"],
+                        item.get("brand"),
+                        item.get("model"),
+                        item["condition_level"],
+                        item["sold_price"],
+                        item["description"],
+                    ),
+                ).fetchone()
+                if existing:
+                    skipped_count += 1
+                    continue
+
+                conn.execute(
+                    """
+                    INSERT INTO reference_items (
+                        category, product_type, brand, model, condition_level, age_months,
+                        original_price, listing_price, sold_price, accessories_complete, description,
+                        source_name, source_type, source_url, imported_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    """,
+                    (
+                        item["category"],
+                        item["product_type"],
+                        item.get("brand"),
+                        item.get("model"),
+                        item["condition_level"],
+                        item["age_months"],
+                        item["original_price"],
+                        item["listing_price"],
+                        item["sold_price"],
+                        int(item["accessories_complete"]),
+                        item["description"],
+                        item.get("source_name") or "用户导入 CSV",
+                        item.get("source_type") or "imported",
+                        item.get("source_url"),
+                    ),
+                )
+                imported_count += 1
+            conn.commit()
+        return {"imported_count": imported_count, "skipped_count": skipped_count}
+
     def search_similar(
         self,
         category: str,
@@ -43,7 +104,8 @@ class ProductRepository:
             rows = conn.execute(
                 """
                 SELECT id, category, product_type, brand, model, condition_level, age_months,
-                       original_price, listing_price, sold_price, accessories_complete, description
+                       original_price, listing_price, sold_price, accessories_complete, description,
+                       source_name, source_type, source_url
                 FROM reference_items
                 WHERE category = ?
                 """,
@@ -59,6 +121,8 @@ class ProductRepository:
             item["text_match_score"] = text_score
             item["image_similarity_score"] = image_score
             item["match_reasons"] = [*_text_match_reasons(item, product_type, brand, model), *image_reasons]
+            if item.get("source_type") == "imported":
+                item["match_reasons"].append("用户导入样本")
             item["_score"] = text_score * 10 + image_score
 
         scored = [item for item in candidates if item["_score"] > 0]

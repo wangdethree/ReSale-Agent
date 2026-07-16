@@ -45,7 +45,8 @@ def _render_price_breakdown(price: dict[str, Any]) -> None:
         "- "
         f"规则权重 {_format_percent(breakdown.get('rule_weight'))}，"
         f"相似成交权重 {_format_percent(breakdown.get('market_weight'))}，"
-        f"相似样本 {breakdown.get('market_sample_count', 0)} 条。"
+        f"相似样本 {breakdown.get('market_sample_count', 0)} 条，"
+        f"其中导入样本 {breakdown.get('imported_sample_count', 0)} 条。"
     )
     _render_adjustment_steps(breakdown.get("adjustment_steps", []))
 
@@ -132,9 +133,10 @@ def render_listing(listing: dict[str, Any]) -> None:
         score_text = f"，图片相似度 {score}" if score else ""
         reasons = "；".join(item.get("match_reasons", []))
         reason_text = f"（{reasons}）" if reasons else ""
+        source = item.get("source_name") or "本地样本库"
         st.write(
-            f"- {item['brand']} {item['model']}：模拟成交价 {item['sold_price']} 元{score_text}，"
-            f"{item['description']}{reason_text}"
+            f"- {item['brand']} {item['model']}：成交价 {item['sold_price']} 元{score_text}，"
+            f"{item['description']}，来源：{source}{reason_text}"
         )
 
     st.markdown("#### 文案")

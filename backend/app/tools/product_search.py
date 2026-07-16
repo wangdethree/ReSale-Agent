@@ -14,7 +14,7 @@ def search_similar_items(
     image_paths: list[str] | None = None,
     visual_keywords: list[str] | None = None,
 ) -> list[dict[str, Any]]:
-    """从本地 SQLite 模拟商品库查询相似商品。"""
+    """从本地 SQLite 样本库查询相似商品。"""
 
     if not product_type:
         return []
