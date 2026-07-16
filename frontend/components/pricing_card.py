@@ -81,7 +81,14 @@ def render_listing(listing: dict[str, Any]) -> None:
 
     st.markdown("#### 相似商品")
     for item in listing["similar_items"]:
-        st.write(f"- {item['brand']} {item['model']}：模拟成交价 {item['sold_price']} 元，{item['description']}")
+        score = item.get("image_similarity_score")
+        score_text = f"，图片相似度 {score}" if score else ""
+        reasons = "；".join(item.get("match_reasons", []))
+        reason_text = f"（{reasons}）" if reasons else ""
+        st.write(
+            f"- {item['brand']} {item['model']}：模拟成交价 {item['sold_price']} 元{score_text}，"
+            f"{item['description']}{reason_text}"
+        )
 
     st.markdown("#### 文案")
     st.text_input("标题", value=listing["title"])

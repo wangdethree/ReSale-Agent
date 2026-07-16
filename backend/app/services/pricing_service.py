@@ -32,4 +32,11 @@ class PricingService:
             has_repair_history=has_repair_history,
             similar_prices=similar_prices,
         )
+        image_summary = state.get("image_similarity_summary") or {}
+        if image_summary.get("used"):
+            result["price_reasons"].append("相似样本排序参考了本地图片线索，但成交价仍来自本地模拟数据")
+            result["price_breakdown"]["image_similarity_used"] = True
+            result["price_breakdown"]["image_similarity_max_score"] = image_summary.get("max_score", 0)
+        else:
+            result["price_breakdown"]["image_similarity_used"] = False
         return result

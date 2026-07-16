@@ -83,7 +83,15 @@ def search_similar_items_node(state: dict[str, Any]) -> dict[str, Any]:
             brand=state.get("brand"),
             model=state.get("model"),
             limit=5,
+            image_paths=state.get("image_paths", []),
+            visual_keywords=_visual_keywords_from_state(state),
         )
+        image_scores = [int(item.get("image_similarity_score") or 0) for item in state["similar_items"]]
+        state["image_similarity_summary"] = {
+            "used": any(score > 0 for score in image_scores),
+            "max_score": max(image_scores) if image_scores else 0,
+            "image_count": len(state.get("image_paths", [])),
+        }
         state["current_step"] = "price_estimation"
 
     return _run_node(state, "search_similar_items", False, work)
@@ -96,6 +104,17 @@ def estimate_price_node(state: dict[str, Any]) -> dict[str, Any]:
         state["current_step"] = "price_validation"
 
     return _run_node(state, "estimate_price", False, work)
+
+
+def _visual_keywords_from_state(state: dict[str, Any]) -> list[str]:
+    keywords: list[str] = []
+    for field in ["color", "visible_condition", "material", "size", "clean_status", "authenticity_status"]:
+        value = state.get(field)
+        if value:
+            keywords.append(str(value))
+    keywords.extend(str(item) for item in state.get("visible_defects", []) if str(item).strip())
+    keywords.extend(str(item) for item in state.get("image_original_names", []) if str(item).strip())
+    return keywords
 
 
 def validate_price_node(state: dict[str, Any]) -> dict[str, Any]:
@@ -141,4 +160,3 @@ def handle_negotiation_node(
         state["last_negotiation"] = result
 
     return _run_node(state, "handle_negotiation", True, work)
-

@@ -26,11 +26,13 @@ async def analyze_images(session_id: str, files: list[UploadFile] = File(...)) -
 
     state = repo.get(session_id)
     saved_paths: list[str] = []
+    original_names: list[str] = []
     upload_dir = settings.upload_dir / session_id
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     for file in files:
-        suffix = UploadValidation.normalize_suffix(file.filename or "")
+        original_name = file.filename or ""
+        suffix = UploadValidation.normalize_suffix(original_name)
         if not suffix:
             raise AppError("图片格式仅支持 JPG、JPEG、PNG")
         if file.content_type not in UploadValidation.allowed_content_types:
@@ -44,7 +46,9 @@ async def analyze_images(session_id: str, files: list[UploadFile] = File(...)) -
         target = upload_dir / safe_name
         target.write_bytes(content)
         saved_paths.append(str(target))
+        original_names.append(original_name)
 
+    state["image_original_names"] = original_names
     analyze_images_node(state, saved_paths)
     repo.save(state)
     product = ProductConfirmation(
@@ -58,4 +62,3 @@ async def analyze_images(session_id: str, files: list[UploadFile] = File(...)) -
         vision_confidence=state.get("vision_confidence"),
     )
     return AnalyzeImageResponse(session_id=session_id, image_paths=saved_paths, product=product)
-

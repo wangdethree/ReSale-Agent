@@ -128,6 +128,9 @@ class SimilarItem(BaseModel):
     sold_price: float
     accessories_complete: bool
     description: str
+    text_match_score: int | None = None
+    image_similarity_score: int | None = None
+    match_reasons: list[str] = Field(default_factory=list)
 
 
 class PriceResult(BaseModel):

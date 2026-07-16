@@ -114,3 +114,57 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert client.get(f"/api/v1/sessions/{session_id}").status_code == 404
         assert client.get("/api/v1/sessions/outcomes/summary").json()["total_count"] == 0
         assert client.get("/api/v1/sessions/outcomes/summary").json()["by_category"] == []
+
+
+def test_image_upload_keeps_original_names_for_local_similarity(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("RESALE_AGENT_DB_PATH", str(tmp_path / "resale.db"))
+    monkeypatch.setenv("RESALE_AGENT_UPLOAD_DIR", str(tmp_path / "uploads"))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    from backend.app.main import app
+
+    with TestClient(app) as client:
+        created = client.post("/api/v1/sessions", json={"category": "shoe_bag"})
+        assert created.status_code == 200
+        session_id = created.json()["session_id"]
+
+        analyzed = client.post(
+            f"/api/v1/sessions/{session_id}/images/analyze",
+            files={"files": ("nike_airforce_photo.jpg", b"fake image bytes", "image/jpeg")},
+        )
+        assert analyzed.status_code == 200
+
+        state = client.get(f"/api/v1/sessions/{session_id}").json()["state"]
+        assert state["image_original_names"] == ["nike_airforce_photo.jpg"]
+
+        confirmed = client.post(
+            f"/api/v1/sessions/{session_id}/confirm",
+            json={
+                "product": {
+                    "category": "shoe_bag",
+                    "product_type": "shoe_bag",
+                    "brand": "不确定",
+                    "model": "不确定",
+                    "visible_condition": "轻微使用痕迹",
+                    "visible_defects": ["鞋底正常磨损"],
+                    "original_price": 749,
+                    "purchase_date": "2024-08",
+                    "size": "42",
+                    "material": "皮革鞋面",
+                    "wear_status": "正常穿着痕迹",
+                    "clean_status": "已简单清洁",
+                    "authenticity_status": "支持当面验货",
+                    "accessories": ["鞋盒"],
+                    "additional_defects": ["无其他明显瑕疵"],
+                    "delivery_options": "支持邮寄或同城验货",
+                }
+            },
+        )
+        assert confirmed.status_code == 200
+
+        listing = client.post(f"/api/v1/sessions/{session_id}/listing/generate")
+        assert listing.status_code == 200
+        listing_json = listing.json()
+        assert listing_json["similar_items"][0]["brand"] == "Nike"
+        assert listing_json["similar_items"][0]["image_similarity_score"] > 0
+        assert listing_json["price"]["price_breakdown"]["image_similarity_used"] is True

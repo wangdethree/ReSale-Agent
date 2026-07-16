@@ -8,6 +8,7 @@ class SaleAgentState(TypedDict, total=False):
     current_step: str
 
     image_paths: list[str]
+    image_original_names: list[str]
     category: Literal["digital", "book", "appliance", "clothing", "furniture", "shoe_bag"]
     product_type: str
     brand: str | None
@@ -39,6 +40,7 @@ class SaleAgentState(TypedDict, total=False):
     current_question: str | None
 
     similar_items: list[dict[str, Any]]
+    image_similarity_summary: dict[str, Any]
     listing_price: float | None
     deal_price_min: float | None
     deal_price_max: float | None

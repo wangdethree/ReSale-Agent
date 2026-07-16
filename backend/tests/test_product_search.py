@@ -57,3 +57,24 @@ def test_search_supports_shoe_bag_category(monkeypatch, tmp_path) -> None:
 
     assert results
     assert all(item["category"] == "shoe_bag" for item in results)
+
+
+def test_search_uses_local_image_signature_when_text_is_generic(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("RESALE_AGENT_DB_PATH", str(tmp_path / "resale.db"))
+    init_database()
+    image_path = tmp_path / "nike_airforce_photo.jpg"
+    image_path.write_bytes(b"local image bytes for nike shoes")
+
+    results = search_similar_items(
+        "shoe_bag",
+        "shoe_bag",
+        None,
+        None,
+        limit=3,
+        image_paths=[str(image_path)],
+    )
+
+    assert results
+    assert results[0]["brand"] == "Nike"
+    assert results[0]["image_similarity_score"] > 0
+    assert any("图片" in reason for reason in results[0]["match_reasons"])

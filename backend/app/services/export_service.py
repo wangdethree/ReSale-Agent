@@ -6,7 +6,7 @@ from typing import Any
 class ExportService:
     def build_markdown(self, state: dict[str, Any]) -> str:
         similar_lines = [
-            f"- {item.get('brand', '')} {item.get('model', '')}：模拟成交价 {item.get('sold_price')} 元，{item.get('description')}"
+            self._build_similar_line(item)
             for item in state.get("similar_items", [])
         ]
         reason_lines = [f"- {reason}" for reason in state.get("price_reasons", [])]
@@ -78,7 +78,25 @@ class ExportService:
                 f"相似成交权重 {float(breakdown.get('market_weight', 0)):.0%}，"
                 f"相似样本 {breakdown.get('market_sample_count', 0)} 条。"
             ),
+            (
+                "- 图片线索："
+                + (
+                    f"已用于本地相似样本排序，最高相似度 {breakdown.get('image_similarity_max_score', 0)}。"
+                    if breakdown.get("image_similarity_used")
+                    else "未使用或未命中本地图片线索。"
+                )
+            ),
         ]
+
+    def _build_similar_line(self, item: dict[str, Any]) -> str:
+        score = item.get("image_similarity_score")
+        score_text = f"，图片相似度 {score}" if score else ""
+        reasons = "；".join(item.get("match_reasons", []))
+        reason_text = f"（{reasons}）" if reasons else ""
+        return (
+            f"- {item.get('brand', '')} {item.get('model', '')}："
+            f"模拟成交价 {item.get('sold_price')} 元{score_text}，{item.get('description')}{reason_text}"
+        )
 
     def _build_platform_lines(self, platform_copies: list[dict[str, Any]]) -> list[str]:
         lines: list[str] = []
