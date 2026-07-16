@@ -79,6 +79,7 @@ class PriceResult(BaseModel):
     suggested_floor_price: int
     price_confidence: Literal["低", "中", "高"]
     price_reasons: list[str]
+    price_breakdown: dict[str, Any]
 
 
 class ListingResponse(BaseModel):
@@ -150,4 +151,3 @@ class FieldAnswer(BaseModel):
         if not value:
             raise ValueError("field 不能为空")
         return value
-

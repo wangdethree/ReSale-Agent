@@ -37,6 +37,7 @@ class SaleAgentState(TypedDict, total=False):
     user_floor_price: float | None
     price_confidence: str | None
     price_reasons: list[str]
+    price_breakdown: dict[str, Any]
 
     title: str | None
     description: str | None
@@ -50,4 +51,3 @@ class SaleAgentState(TypedDict, total=False):
 
     errors: list[str]
     trace: list[dict[str, Any]]
-

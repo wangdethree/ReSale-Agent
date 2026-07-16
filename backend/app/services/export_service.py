@@ -10,6 +10,7 @@ class ExportService:
             for item in state.get("similar_items", [])
         ]
         reason_lines = [f"- {reason}" for reason in state.get("price_reasons", [])]
+        breakdown_lines = self._build_breakdown_lines(state.get("price_breakdown", {}))
         photo_lines = [f"- {item}" for item in state.get("photo_suggestions", [])]
         keyword_text = "、".join(state.get("keywords", []))
 
@@ -25,6 +26,9 @@ class ExportService:
                 "",
                 "## 估价依据",
                 *(reason_lines or ["- 暂无估价依据"]),
+                "",
+                "## 估价拆解",
+                *(breakdown_lines or ["- 暂无估价拆解"]),
                 "",
                 "## 相似商品",
                 *(similar_lines or ["- 未找到足够相似商品，当前结果仅为规则估价。"]),
@@ -43,3 +47,27 @@ class ExportService:
             ]
         )
 
+    def _build_breakdown_lines(self, breakdown: dict[str, Any]) -> list[str]:
+        if not breakdown:
+            return []
+
+        market_median = breakdown.get("market_median_price")
+        market_text = f"{float(market_median):.0f} 元" if market_median is not None else "暂无"
+        return [
+            (
+                f"- 原价 {float(breakdown.get('original_price', 0)):.0f} 元，"
+                f"使用约 {breakdown.get('age_months', '未知')} 个月，"
+                f"折旧系数 {float(breakdown.get('depreciation_factor', 0)):.2f}，"
+                f"成色系数 {float(breakdown.get('condition_factor', 0)):.2f}。"
+            ),
+            (
+                f"- 规则估价 {float(breakdown.get('rule_price', 0)):.0f} 元，"
+                f"市场中位价 {market_text}，"
+                f"最终基准价 {float(breakdown.get('base_price', 0)):.0f} 元。"
+            ),
+            (
+                f"- 规则权重 {float(breakdown.get('rule_weight', 0)):.0%}，"
+                f"相似成交权重 {float(breakdown.get('market_weight', 0)):.0%}，"
+                f"相似样本 {breakdown.get('market_sample_count', 0)} 条。"
+            ),
+        ]

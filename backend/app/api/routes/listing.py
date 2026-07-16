@@ -28,6 +28,7 @@ def generate_listing(session_id: str) -> ListingResponse:
             suggested_floor_price=state["suggested_floor_price"],
             price_confidence=state["price_confidence"],
             price_reasons=state["price_reasons"],
+            price_breakdown=state["price_breakdown"],
         ),
         similar_items=[SimilarItem(**item) for item in state.get("similar_items", [])],
         title=state["title"],
@@ -43,4 +44,3 @@ def generate_listing(session_id: str) -> ListingResponse:
 def export_markdown(session_id: str) -> str:
     state = repo.get(session_id)
     return ExportService().build_markdown(state)
-

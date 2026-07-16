@@ -45,6 +45,8 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert listing.status_code == 200
         listing_json = listing.json()
         assert listing_json["price"]["listing_price"] >= listing_json["price"]["deal_price_max"]
+        assert listing_json["price"]["price_breakdown"]["market_sample_count"] >= 3
+        assert listing_json["price"]["price_breakdown"]["base_price"] > 0
         assert "Keychron" in listing_json["title"]
 
         floor = listing_json["price"]["suggested_floor_price"]
@@ -59,3 +61,4 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         exported = client.get(f"/api/v1/sessions/{session_id}/export")
         assert exported.status_code == 200
         assert "# 闲置 Keychron K2" in exported.text
+        assert "## 估价拆解" in exported.text

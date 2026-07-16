@@ -23,6 +23,7 @@ class SessionRepository:
             "missing_fields": [],
             "similar_items": [],
             "price_reasons": [],
+            "price_breakdown": {},
             "keywords": [],
             "photo_suggestions": [],
             "errors": [],
@@ -79,4 +80,3 @@ class SessionRepository:
                 (session_id, buyer_message, intent, reply),
             )
             conn.commit()
-

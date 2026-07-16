@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from datetime import date
 from statistics import median
+from typing import Any
 
 
 DEPRECIATION_RANGES = [
@@ -74,7 +75,7 @@ def _functional_penalty(functional_status: str | None) -> float:
     return 0.0
 
 
-def validate_price_result(result: dict[str, int | str | list[str]]) -> list[str]:
+def validate_price_result(result: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     listing_price = int(result["listing_price"])
     deal_min = int(result["deal_price_min"])
@@ -99,7 +100,7 @@ def calculate_price_range(
     accessories_complete: bool,
     has_repair_history: bool,
     similar_prices: list[float],
-) -> dict[str, int | str | list[str]]:
+) -> dict[str, Any]:
     """使用透明规则计算挂牌价、成交区间和建议最低价。"""
 
     original_price = max(float(original_price or 0), 0)
@@ -107,6 +108,8 @@ def calculate_price_range(
     depreciation = _depreciation_factor(age_months)
     condition_factor = CONDITION_FACTORS[normalized_condition]
     adjustment = 1.0
+    accessories_adjustment = 0.0
+    repair_adjustment = 0.0
     reasons = [
         f"原价按 {original_price:.0f} 元计算",
         f"使用约 {age_months} 个月，基础保值系数 {depreciation:.2f}",
@@ -114,13 +117,15 @@ def calculate_price_range(
     ]
 
     if accessories_complete:
-        adjustment += 0.05
+        accessories_adjustment = 0.05
+        adjustment += accessories_adjustment
         reasons.append("配件较完整，上调 5%")
     else:
         reasons.append("配件不完整或未确认，不做配件加成")
 
     if has_repair_history:
-        adjustment -= 0.10
+        repair_adjustment = -0.10
+        adjustment += repair_adjustment
         reasons.append("存在维修或拆修记录，下调 10%")
 
     penalty = _functional_penalty(functional_status)
@@ -128,12 +133,18 @@ def calculate_price_range(
         adjustment -= penalty
         reasons.append(f"功能状态存在风险，下调 {int(penalty * 100)}%")
 
-    rule_price = original_price * depreciation * condition_factor * max(adjustment, 0.2)
+    final_adjustment = max(adjustment, 0.2)
+    rule_price = original_price * depreciation * condition_factor * final_adjustment
     clean_similar_prices = [float(price) for price in similar_prices if price and price > 0]
+    market_price: float | None = None
+    rule_weight = 1.0
+    market_weight = 0.0
 
     if len(clean_similar_prices) >= 3:
         market_price = median(clean_similar_prices)
-        base_price = rule_price * 0.4 + market_price * 0.6
+        rule_weight = 0.4
+        market_weight = 0.6
+        base_price = rule_price * rule_weight + market_price * market_weight
         confidence = "高" if len(clean_similar_prices) >= 5 else "中"
         reasons.append(f"融合 {len(clean_similar_prices)} 条模拟相似成交价，中位数 {market_price:.0f} 元")
     else:
@@ -146,13 +157,30 @@ def calculate_price_range(
     deal_price_max = round(base_price * 1.05)
     suggested_floor_price = round(deal_price_min * 0.92)
 
-    result: dict[str, int | str | list[str]] = {
+    result: dict[str, Any] = {
         "listing_price": max(0, listing_price),
         "deal_price_min": max(0, deal_price_min),
         "deal_price_max": max(0, deal_price_max),
         "suggested_floor_price": max(0, suggested_floor_price),
         "price_confidence": confidence,
         "price_reasons": reasons,
+        "price_breakdown": {
+            "original_price": round(original_price, 2),
+            "age_months": age_months,
+            "depreciation_factor": depreciation,
+            "normalized_condition": normalized_condition,
+            "condition_factor": condition_factor,
+            "accessories_adjustment": accessories_adjustment,
+            "repair_adjustment": repair_adjustment,
+            "functional_penalty": penalty,
+            "final_adjustment": round(final_adjustment, 2),
+            "rule_price": max(0, round(rule_price)),
+            "market_sample_count": len(clean_similar_prices),
+            "market_median_price": round(market_price, 2) if market_price is not None else None,
+            "rule_weight": rule_weight,
+            "market_weight": market_weight,
+            "base_price": max(0, round(base_price)),
+        },
     }
 
     errors = validate_price_result(result)
@@ -163,4 +191,3 @@ def calculate_price_range(
 
 def parse_repair_history(repair_history: str | None) -> bool:
     return _contains_positive_repair(repair_history)
-

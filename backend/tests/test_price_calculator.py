@@ -60,3 +60,22 @@ def test_similar_sample_shortage_sets_low_confidence_and_boundaries_are_valid() 
     assert result["price_confidence"] == "低"
     assert validate_price_result(result) == []
 
+
+def test_price_breakdown_explains_rule_and_market_weights() -> None:
+    result = calculate_price_range(
+        original_price=1000,
+        age_months=8,
+        condition_level="轻微使用痕迹",
+        functional_status="功能正常",
+        accessories_complete=True,
+        has_repair_history=False,
+        similar_prices=[500, 520, 540, 560, 580],
+    )
+    breakdown = result["price_breakdown"]
+
+    assert breakdown["market_sample_count"] == 5
+    assert breakdown["market_median_price"] == 540
+    assert breakdown["rule_weight"] == 0.4
+    assert breakdown["market_weight"] == 0.6
+    assert breakdown["final_adjustment"] == 1.05
+    assert breakdown["rule_price"] > 0
