@@ -45,6 +45,22 @@ class ApiClient:
         response = requests.delete(f"{API_BASE_URL}/sessions/{session_id}", timeout=15)
         self._raise_for_status(response)
 
+    def record_sale_outcome(
+        self,
+        session_id: str,
+        final_sold_price: float,
+        sold_channel: str,
+        sale_notes: str,
+    ) -> dict[str, Any]:
+        payload = {
+            "final_sold_price": final_sold_price,
+            "sold_channel": sold_channel,
+            "sale_notes": sale_notes,
+        }
+        response = requests.post(f"{API_BASE_URL}/sessions/{session_id}/outcome", json=payload, timeout=15)
+        self._raise_for_status(response)
+        return response.json()
+
     def analyze_images(self, session_id: str, files: list[Any]) -> dict[str, Any]:
         multipart = [
             ("files", (file.name, file.getvalue(), file.type or "image/jpeg"))

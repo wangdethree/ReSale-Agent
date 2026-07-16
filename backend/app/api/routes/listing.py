@@ -37,6 +37,7 @@ def generate_listing(session_id: str) -> ListingResponse:
         defect_statement=state["defect_statement"],
         photo_suggestions=state["photo_suggestions"],
         platform_copies=[PlatformCopy(**item) for item in state.get("platform_copies", [])],
+        sale_outcome=state.get("sale_outcome"),
         trace=state.get("trace", []),
     )
 

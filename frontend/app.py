@@ -14,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from frontend.api_client import ApiClient
 from frontend.components.confirmation_form import render_confirmation_form
 from frontend.components.negotiation_panel import render_negotiation_panel, render_negotiation_result
+from frontend.components.outcome_panel import render_outcome_panel
 from frontend.components.pricing_card import render_listing
 from frontend.components.question_form import render_question_form
 from frontend.components.upload_panel import CATEGORY_OPTIONS, render_upload_panel
@@ -137,6 +138,12 @@ try:
                 st.info("信息补充完整后再生成出售方案。")
         else:
             render_listing(st.session_state.listing)
+            outcome_payload = render_outcome_panel(st.session_state.listing)
+            if outcome_payload:
+                response = client.record_sale_outcome(st.session_state.session_id, **outcome_payload)
+                _sync_state(response)
+                st.session_state.listing["sale_outcome"] = response["state"].get("sale_outcome")
+                st.rerun()
             markdown = client.export_markdown(st.session_state.session_id)
             st.download_button("下载 Markdown 报告", markdown, file_name="resale-agent-report.md")
             if st.button("进入模拟议价"):

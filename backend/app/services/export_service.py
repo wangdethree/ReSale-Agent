@@ -13,6 +13,7 @@ class ExportService:
         breakdown_lines = self._build_breakdown_lines(state.get("price_breakdown", {}))
         photo_lines = [f"- {item}" for item in state.get("photo_suggestions", [])]
         platform_lines = self._build_platform_lines(state.get("platform_copies", []))
+        outcome_lines = self._build_outcome_lines(state.get("sale_outcome"))
         keyword_text = "、".join(state.get("keywords", []))
 
         return "\n".join(
@@ -39,6 +40,9 @@ class ExportService:
                 "",
                 "## 多平台文案",
                 *(platform_lines or ["- 尚未生成多平台文案。"]),
+                "",
+                "## 成交反馈",
+                *(outcome_lines or ["- 尚未记录成交反馈。"]),
                 "",
                 "## 搜索关键词",
                 keyword_text or "暂无关键词",
@@ -93,3 +97,23 @@ class ExportService:
                 ]
             )
         return lines
+
+    def _build_outcome_lines(self, outcome: dict[str, Any] | None) -> list[str]:
+        if not outcome:
+            return []
+
+        delta = outcome.get("price_delta_from_mid")
+        delta_text = "暂无偏差"
+        if delta is not None:
+            sign = "+" if float(delta) > 0 else ""
+            delta_text = f"{sign}{float(delta):.0f} 元"
+
+        rate = outcome.get("price_delta_rate")
+        rate_text = f"{float(rate):+.1%}" if rate is not None else "暂无比例"
+        return [
+            f"- 最终成交价：{float(outcome.get('final_sold_price', 0)):.0f} 元",
+            f"- 成交渠道：{outcome.get('sold_channel') or '未填写'}",
+            f"- 相对估价中点偏差：{delta_text}（{rate_text}）",
+            f"- 估价区间位置：{outcome.get('price_position') or '暂无'}",
+            f"- 备注：{outcome.get('sale_notes') or '无'}",
+        ]

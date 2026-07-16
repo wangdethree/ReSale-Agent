@@ -61,12 +61,25 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert negotiation.json()["below_floor_price"] is True
         assert str(floor) in negotiation.json()["suggested_reply"]
 
+        outcome = client.post(
+            f"/api/v1/sessions/{session_id}/outcome",
+            json={"final_sold_price": 280, "sold_channel": "闲鱼", "sale_notes": "两天内成交"},
+        )
+        assert outcome.status_code == 200
+        sale_outcome = outcome.json()["state"]["sale_outcome"]
+        assert sale_outcome["final_sold_price"] == 280
+        assert sale_outcome["sold_channel"] == "闲鱼"
+        assert sale_outcome["price_position"] == "符合估价区间"
+        assert sale_outcome["price_delta_from_mid"] != 0
+
         exported = client.get(f"/api/v1/sessions/{session_id}/export")
         assert exported.status_code == 200
         assert "# 闲置 Keychron K2" in exported.text
         assert "## 估价拆解" in exported.text
         assert "## 多平台文案" in exported.text
         assert "### 闲鱼" in exported.text
+        assert "## 成交反馈" in exported.text
+        assert "两天内成交" in exported.text
 
         sessions = client.get("/api/v1/sessions")
         assert sessions.status_code == 200

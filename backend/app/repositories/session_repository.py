@@ -27,6 +27,7 @@ class SessionRepository:
             "keywords": [],
             "photo_suggestions": [],
             "platform_copies": [],
+            "sale_outcome": None,
             "errors": [],
             "trace": [],
         }

@@ -8,11 +8,13 @@ from backend.app.models.schemas import (
     AnswerRequest,
     ConfirmRequest,
     NextQuestionResponse,
+    SaleOutcomeRequest,
     SaleStateResponse,
     SessionCreate,
     SessionSummary,
 )
 from backend.app.repositories.session_repository import SessionRepository
+from backend.app.services.outcome_service import OutcomeService
 from backend.app.tools.field_checker import get_question_for_field
 
 
@@ -41,6 +43,14 @@ def get_session(session_id: str) -> SaleStateResponse:
 @router.delete("/{session_id}", status_code=204)
 def delete_session(session_id: str) -> None:
     repo.delete(session_id)
+
+
+@router.post("/{session_id}/outcome", response_model=SaleStateResponse)
+def record_sale_outcome(session_id: str, payload: SaleOutcomeRequest) -> SaleStateResponse:
+    state = repo.get(session_id)
+    OutcomeService().record(state, payload.final_sold_price, payload.sold_channel, payload.sale_notes)
+    repo.save(state)
+    return SaleStateResponse(session_id=session_id, current_step=state["current_step"], state=state)
 
 
 @router.post("/{session_id}/confirm", response_model=SaleStateResponse)

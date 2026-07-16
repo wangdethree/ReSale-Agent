@@ -66,6 +66,12 @@ class AnswerRequest(BaseModel):
     answer: Any
 
 
+class SaleOutcomeRequest(BaseModel):
+    final_sold_price: float = Field(ge=0)
+    sold_channel: str | None = None
+    sale_notes: str | None = None
+
+
 class SimilarItem(BaseModel):
     id: int
     category: Category
@@ -109,6 +115,7 @@ class ListingResponse(BaseModel):
     defect_statement: str
     photo_suggestions: list[str]
     platform_copies: list[PlatformCopy]
+    sale_outcome: dict[str, Any] | None = None
     trace: list[dict[str, Any]]
 
 
