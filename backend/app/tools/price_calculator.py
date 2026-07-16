@@ -75,6 +75,14 @@ def _functional_penalty(functional_status: str | None) -> float:
     return 0.0
 
 
+def _money(value: float) -> int:
+    return max(0, round(value))
+
+
+def _signed_money(value: float) -> int:
+    return round(value)
+
+
 def validate_price_result(result: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     listing_price = int(result["listing_price"])
@@ -134,6 +142,8 @@ def calculate_price_range(
         reasons.append(f"功能状态存在风险，下调 {int(penalty * 100)}%")
 
     final_adjustment = max(adjustment, 0.2)
+    depreciation_price = original_price * depreciation
+    condition_price = depreciation_price * condition_factor
     rule_price = original_price * depreciation * condition_factor * final_adjustment
     clean_similar_prices = [float(price) for price in similar_prices if price and price > 0]
     market_price: float | None = None
@@ -180,6 +190,28 @@ def calculate_price_range(
             "rule_weight": rule_weight,
             "market_weight": market_weight,
             "base_price": max(0, round(base_price)),
+            "adjustment_steps": _build_adjustment_steps(
+                original_price=original_price,
+                depreciation=depreciation,
+                depreciation_price=depreciation_price,
+                normalized_condition=normalized_condition,
+                condition_factor=condition_factor,
+                condition_price=condition_price,
+                accessories_adjustment=accessories_adjustment,
+                repair_adjustment=repair_adjustment,
+                functional_penalty=penalty,
+                final_adjustment=final_adjustment,
+                rule_price=rule_price,
+                market_price=market_price,
+                market_sample_count=len(clean_similar_prices),
+                rule_weight=rule_weight,
+                market_weight=market_weight,
+                base_price=base_price,
+                listing_price=listing_price,
+                deal_price_min=deal_price_min,
+                deal_price_max=deal_price_max,
+                suggested_floor_price=suggested_floor_price,
+            ),
         },
     }
 
@@ -191,3 +223,83 @@ def calculate_price_range(
 
 def parse_repair_history(repair_history: str | None) -> bool:
     return _contains_positive_repair(repair_history)
+
+
+def _build_adjustment_steps(
+    *,
+    original_price: float,
+    depreciation: float,
+    depreciation_price: float,
+    normalized_condition: str,
+    condition_factor: float,
+    condition_price: float,
+    accessories_adjustment: float,
+    repair_adjustment: float,
+    functional_penalty: float,
+    final_adjustment: float,
+    rule_price: float,
+    market_price: float | None,
+    market_sample_count: int,
+    rule_weight: float,
+    market_weight: float,
+    base_price: float,
+    listing_price: int,
+    deal_price_min: int,
+    deal_price_max: int,
+    suggested_floor_price: int,
+) -> list[dict[str, Any]]:
+    adjustment_effect = condition_price * (final_adjustment - 1.0)
+    steps = [
+        {
+            "label": "原价",
+            "effect": 0,
+            "amount": _money(original_price),
+            "note": "用户填写或确认的购买原价",
+        },
+        {
+            "label": "使用折旧",
+            "effect": _signed_money(depreciation_price - original_price),
+            "amount": _money(depreciation_price),
+            "note": f"基础保值系数 {depreciation:.2f}",
+        },
+        {
+            "label": "成色调整",
+            "effect": _signed_money(condition_price - depreciation_price),
+            "amount": _money(condition_price),
+            "note": f"{normalized_condition}，成色系数 {condition_factor:.2f}",
+        },
+        {
+            "label": "配件/维修/功能",
+            "effect": _signed_money(adjustment_effect),
+            "amount": _money(rule_price),
+            "note": (
+                f"配件 {accessories_adjustment:+.0%}，"
+                f"维修 {repair_adjustment:+.0%}，"
+                f"功能风险 {-functional_penalty:.0%}，最终调整 {final_adjustment:.2f}"
+            ),
+        },
+        {
+            "label": "规则估价",
+            "effect": 0,
+            "amount": _money(rule_price),
+            "note": "由原价、折旧、成色和状态调整得到",
+        },
+        {
+            "label": "市场融合",
+            "effect": _signed_money(base_price - rule_price),
+            "amount": _money(base_price),
+            "note": (
+                f"融合 {market_sample_count} 条本地模拟成交，中位数 {_money(market_price or 0)} 元，"
+                f"规则权重 {rule_weight:.0%}，市场权重 {market_weight:.0%}"
+                if market_price is not None
+                else "相似样本不足，沿用规则估价"
+            ),
+        },
+        {
+            "label": "发布建议",
+            "effect": _signed_money(listing_price - base_price),
+            "amount": _money(listing_price),
+            "note": f"成交区间 {deal_price_min}～{deal_price_max} 元，最低接受价 {suggested_floor_price} 元",
+        },
+    ]
+    return steps

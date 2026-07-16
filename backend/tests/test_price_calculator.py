@@ -79,3 +79,15 @@ def test_price_breakdown_explains_rule_and_market_weights() -> None:
     assert breakdown["market_weight"] == 0.6
     assert breakdown["final_adjustment"] == 1.05
     assert breakdown["rule_price"] > 0
+    steps = breakdown["adjustment_steps"]
+    assert [step["label"] for step in steps] == [
+        "原价",
+        "使用折旧",
+        "成色调整",
+        "配件/维修/功能",
+        "规则估价",
+        "市场融合",
+        "发布建议",
+    ]
+    assert steps[1]["effect"] < 0
+    assert steps[-1]["amount"] == result["listing_price"]

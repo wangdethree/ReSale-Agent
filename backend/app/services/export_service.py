@@ -86,7 +86,22 @@ class ExportService:
                     else "未使用或未命中本地图片线索。"
                 )
             ),
+            *self._build_adjustment_step_lines(breakdown.get("adjustment_steps", [])),
         ]
+
+    def _build_adjustment_step_lines(self, steps: list[dict[str, Any]]) -> list[str]:
+        if not steps:
+            return []
+
+        lines = ["- 调价明细："]
+        for step in steps:
+            effect = float(step.get("effect") or 0)
+            effect_text = f"{effect:+.0f} 元"
+            lines.append(
+                f"  - {step.get('label', '')}：影响 {effect_text}，"
+                f"阶段价 {float(step.get('amount') or 0):.0f} 元，{step.get('note', '')}"
+            )
+        return lines
 
     def _build_similar_line(self, item: dict[str, Any]) -> str:
         score = item.get("image_similarity_score")

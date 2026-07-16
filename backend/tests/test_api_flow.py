@@ -99,6 +99,7 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert exported.status_code == 200
         assert "# 闲置 Keychron K2" in exported.text
         assert "## 估价拆解" in exported.text
+        assert "调价明细" in exported.text
         assert "## 多平台文案" in exported.text
         assert "### 闲鱼" in exported.text
         assert "## 成交反馈" in exported.text

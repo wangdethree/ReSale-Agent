@@ -17,6 +17,12 @@ def _format_percent(value: Any) -> str:
     return f"{float(value) * 100:.0f}%"
 
 
+def _format_effect(value: Any) -> str:
+    amount = float(value or 0)
+    sign = "+" if amount > 0 else ""
+    return f"{sign}{amount:.0f} 元"
+
+
 def _render_price_breakdown(price: dict[str, Any]) -> None:
     breakdown = price.get("price_breakdown") or {}
     if not breakdown:
@@ -40,6 +46,27 @@ def _render_price_breakdown(price: dict[str, Any]) -> None:
         f"规则权重 {_format_percent(breakdown.get('rule_weight'))}，"
         f"相似成交权重 {_format_percent(breakdown.get('market_weight'))}，"
         f"相似样本 {breakdown.get('market_sample_count', 0)} 条。"
+    )
+    _render_adjustment_steps(breakdown.get("adjustment_steps", []))
+
+
+def _render_adjustment_steps(steps: list[dict[str, Any]]) -> None:
+    if not steps:
+        return
+
+    st.markdown("#### 调价明细")
+    st.dataframe(
+        [
+            {
+                "步骤": step.get("label", ""),
+                "影响": _format_effect(step.get("effect")),
+                "阶段价": _format_money(step.get("amount")),
+                "说明": step.get("note", ""),
+            }
+            for step in steps
+        ],
+        use_container_width=True,
+        hide_index=True,
     )
 
 
