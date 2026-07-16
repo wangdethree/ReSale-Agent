@@ -20,6 +20,7 @@ def load_demo_cases() -> list[dict[str, Any]]:
 def test_demo_case_full_flow(monkeypatch, tmp_path, case: dict[str, Any]) -> None:
     monkeypatch.setenv("RESALE_AGENT_DB_PATH", str(tmp_path / "resale.db"))
     monkeypatch.setenv("RESALE_AGENT_UPLOAD_DIR", str(tmp_path / "uploads"))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     from backend.app.main import app
 
@@ -56,4 +57,3 @@ def test_demo_case_full_flow(monkeypatch, tmp_path, case: dict[str, Any]) -> Non
         exported = client.get(f"/api/v1/sessions/{session_id}/export")
         assert exported.status_code == 200
         assert listing_json["title"] in exported.text
-

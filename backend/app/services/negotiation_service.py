@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from backend.app.services.text_model_service import TextModelService
+
 
 class NegotiationService:
     def handle(self, state: dict[str, Any], buyer_message: str, user_floor_price: float | None = None) -> dict[str, Any]:
@@ -18,6 +20,14 @@ class NegotiationService:
         below_floor = bool(offer_price is not None and floor_price and offer_price < floor_price)
         reply = self._build_reply(state, buyer_message, intent, offer_price, floor_price, below_floor)
         strategy = self._strategy(intent, below_floor)
+        if not below_floor:
+            try:
+                model_result = self._reply_with_model(state, buyer_message, intent, offer_price, floor_price, reply, strategy)
+            except Exception:
+                model_result = None
+            if model_result:
+                reply = model_result["suggested_reply"]
+                strategy = model_result["next_strategy"]
         return {
             "buyer_intent": intent,
             "offer_price": offer_price,
@@ -73,3 +83,45 @@ class NegotiationService:
             return "确认买家诚意，保留小幅让价空间。"
         return "补充事实信息，推动买家确认交易方式。"
 
+    def _reply_with_model(
+        self,
+        state: dict[str, Any],
+        buyer_message: str,
+        intent: str,
+        offer_price: float | None,
+        floor_price: float,
+        fallback_reply: str,
+        fallback_strategy: str,
+    ) -> dict[str, str] | None:
+        result = TextModelService().generate_json(
+            system_prompt=(
+                "你是二手商品议价回复助手。只返回 JSON，字段为 suggested_reply, next_strategy。"
+                "回复必须礼貌、真实，必须基于商品信息和已知瑕疵。"
+                f"不得建议低于最低接受价 {floor_price:.0f} 元成交。"
+            ),
+            payload={
+                "buyer_message": buyer_message,
+                "buyer_intent": intent,
+                "offer_price": offer_price,
+                "floor_price": floor_price,
+                "title": state.get("title") or state.get("model") or state.get("product_type"),
+                "visible_condition": state.get("visible_condition"),
+                "visible_defects": state.get("visible_defects", []),
+                "additional_defects": state.get("additional_defects", []),
+                "delivery_options": state.get("delivery_options"),
+                "template_reply": fallback_reply,
+                "template_strategy": fallback_strategy,
+            },
+        )
+        if not result:
+            return None
+
+        reply = str(result.get("suggested_reply") or "").strip()
+        strategy = str(result.get("next_strategy") or "").strip()
+        if not reply:
+            return None
+
+        return {
+            "suggested_reply": reply,
+            "next_strategy": strategy or fallback_strategy,
+        }

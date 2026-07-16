@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from backend.app.services.text_model_service import TextModelService
+
 
 CATEGORY_LABELS = {
     "digital": "数码产品",
@@ -12,6 +14,14 @@ CATEGORY_LABELS = {
 
 class ListingService:
     def generate(self, state: dict[str, Any]) -> dict[str, Any]:
+        template = self._template_listing(state)
+        try:
+            model_listing = self._generate_with_model(state, template)
+        except Exception:
+            model_listing = None
+        return model_listing or template
+
+    def _template_listing(self, state: dict[str, Any]) -> dict[str, Any]:
         category = state.get("category", "digital")
         product_type = state.get("product_type") or "闲置商品"
         brand = state.get("brand") or ""
@@ -32,6 +42,52 @@ class ListingService:
         return {
             "title": title,
             "description": description,
+            "keywords": keywords,
+            "defect_statement": defect_statement,
+            "photo_suggestions": photo_suggestions,
+        }
+
+    def _generate_with_model(self, state: dict[str, Any], template: dict[str, Any]) -> dict[str, Any] | None:
+        payload = {
+            "category": state.get("category"),
+            "product_type": state.get("product_type"),
+            "brand": state.get("brand"),
+            "model": state.get("model"),
+            "color": state.get("color"),
+            "visible_condition": state.get("visible_condition"),
+            "visible_defects": state.get("visible_defects", []),
+            "additional_defects": state.get("additional_defects", []),
+            "purchase_date": state.get("purchase_date"),
+            "original_price": state.get("original_price"),
+            "functional_status": state.get("functional_status"),
+            "repair_history": state.get("repair_history"),
+            "accessories": state.get("accessories", []),
+            "delivery_options": state.get("delivery_options"),
+            "template": template,
+        }
+        result = TextModelService().generate_json(
+            system_prompt=(
+                "你是二手商品发布文案助手。只返回 JSON，字段为 title, description, "
+                "keywords, photo_suggestions。不要输出价格，不要使用绝对全新、完美无瑕等无法验证表述，"
+                "不得隐藏用户已确认的瑕疵。"
+            ),
+            payload=payload,
+        )
+        if not result:
+            return None
+
+        title = str(result.get("title") or template["title"]).strip()[:60]
+        description = str(result.get("description") or template["description"]).strip()
+        defect_statement = template["defect_statement"]
+        if defect_statement not in description:
+            description = f"{description}\n{defect_statement}"
+
+        keywords = self._coerce_str_list(result.get("keywords")) or template["keywords"]
+        photo_suggestions = self._coerce_str_list(result.get("photo_suggestions")) or template["photo_suggestions"]
+
+        return {
+            "title": title or template["title"],
+            "description": description or template["description"],
             "keywords": keywords,
             "defect_statement": defect_statement,
             "photo_suggestions": photo_suggestions,
@@ -79,3 +135,7 @@ class ListingService:
             return "、".join(str(item) for item in value if str(item).strip())
         return str(value or "")
 
+    def _coerce_str_list(self, value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        return [str(item).strip() for item in value if str(item).strip()]

@@ -64,6 +64,8 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         os.environ["RESALE_AGENT_DB_PATH"] = str(Path(temp_dir) / "resale.db")
         os.environ["RESALE_AGENT_UPLOAD_DIR"] = str(Path(temp_dir) / "uploads")
+        if os.getenv("RESALE_AGENT_DEMO_USE_MODEL") != "1":
+            os.environ.pop("OPENAI_API_KEY", None)
 
         warnings.filterwarnings("ignore", message="Using `httpx` with `starlette.testclient` is deprecated.*")
         from fastapi.testclient import TestClient

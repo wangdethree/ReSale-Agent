@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 def test_complete_api_flow(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("RESALE_AGENT_DB_PATH", str(tmp_path / "resale.db"))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
     from backend.app.main import app
 
@@ -58,4 +59,3 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         exported = client.get(f"/api/v1/sessions/{session_id}/export")
         assert exported.status_code == 200
         assert "# 闲置 Keychron K2" in exported.text
-
