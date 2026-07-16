@@ -77,6 +77,9 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         summary_json = outcome_summary.json()
         assert summary_json["total_count"] == 1
         assert summary_json["in_range_count"] == 1
+        assert summary_json["by_category"][0]["category"] == "digital"
+        assert summary_json["by_category"][0]["total_count"] == 1
+        assert summary_json["by_category"][0]["in_range_count"] == 1
         assert summary_json["recent_outcomes"][0]["session_id"] == session_id
         assert summary_json["recent_outcomes"][0]["final_sold_price"] == 280
 
@@ -98,3 +101,4 @@ def test_complete_api_flow(monkeypatch, tmp_path) -> None:
         assert deleted.status_code == 204
         assert client.get(f"/api/v1/sessions/{session_id}").status_code == 404
         assert client.get("/api/v1/sessions/outcomes/summary").json()["total_count"] == 0
+        assert client.get("/api/v1/sessions/outcomes/summary").json()["by_category"] == []

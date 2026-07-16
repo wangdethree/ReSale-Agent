@@ -23,6 +23,23 @@ def render_outcome_summary(summary: dict[str, Any]) -> None:
             avg_text = f"{sign}{float(avg_delta):.0f} 元"
         st.metric("平均偏差", avg_text)
 
+        by_category = summary.get("by_category", [])
+        if by_category:
+            st.write("分类表现")
+            for item in by_category:
+                category_delta = item.get("average_delta_from_mid")
+                category_delta_text = "暂无偏差"
+                if category_delta is not None:
+                    sign = "+" if float(category_delta) > 0 else ""
+                    category_delta_text = f"{sign}{float(category_delta):.0f} 元"
+                st.write(
+                    f"- {item.get('category_label', item.get('category', '未知类别'))} · "
+                    f"{item.get('total_count', 0)} 单 · "
+                    f"符合 {float(item.get('in_range_rate', 0)):.0%} · "
+                    f"均偏 {category_delta_text}"
+                )
+
+        st.write("最近成交")
         for item in summary.get("recent_outcomes", [])[:5]:
             delta = item.get("price_delta_from_mid")
             delta_text = "暂无偏差"

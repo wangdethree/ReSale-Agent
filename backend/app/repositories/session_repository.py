@@ -8,6 +8,13 @@ from backend.app.core.exceptions import AppError
 from backend.app.db.connection import get_connection
 
 
+CATEGORY_LABELS = {
+    "digital": "数码产品",
+    "book": "图书",
+    "appliance": "小家电",
+}
+
+
 class SessionRepository:
     def create(self, category: str) -> dict[str, Any]:
         session_id = str(uuid4())
@@ -142,6 +149,7 @@ class SessionRepository:
             "average_delta_from_mid": round(sum(deltas) / len(deltas), 2) if deltas else None,
             "average_delta_rate": round(sum(delta_rates) / len(delta_rates), 4) if delta_rates else None,
             "total_sold_amount": round(total_sold_amount, 2),
+            "by_category": self._summarize_outcomes_by_category(outcomes),
             "recent_outcomes": outcomes[:recent_limit],
         }
 
@@ -173,3 +181,28 @@ class SessionRepository:
         ]
         label = " ".join(part for part in parts if part).strip()
         return label[:60] if label else "未命名草稿"
+
+    def _summarize_outcomes_by_category(self, outcomes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        summaries: list[dict[str, Any]] = []
+        for category, category_label in CATEGORY_LABELS.items():
+            items = [item for item in outcomes if item["category"] == category]
+            if not items:
+                continue
+
+            in_range_count = sum(1 for item in items if item["price_position"] == "符合估价区间")
+            deltas = [float(item["price_delta_from_mid"]) for item in items if item["price_delta_from_mid"] is not None]
+            delta_rates = [float(item["price_delta_rate"]) for item in items if item["price_delta_rate"] is not None]
+            total_sold_amount = sum(item["final_sold_price"] for item in items)
+            summaries.append(
+                {
+                    "category": category,
+                    "category_label": category_label,
+                    "total_count": len(items),
+                    "in_range_count": in_range_count,
+                    "in_range_rate": round(in_range_count / len(items), 4),
+                    "average_delta_from_mid": round(sum(deltas) / len(deltas), 2) if deltas else None,
+                    "average_delta_rate": round(sum(delta_rates) / len(delta_rates), 4) if delta_rates else None,
+                    "total_sold_amount": round(total_sold_amount, 2),
+                }
+            )
+        return summaries

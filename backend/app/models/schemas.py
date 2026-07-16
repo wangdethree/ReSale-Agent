@@ -84,6 +84,17 @@ class OutcomeSummaryItem(BaseModel):
     updated_at: str
 
 
+class OutcomeCategorySummary(BaseModel):
+    category: Category
+    category_label: str
+    total_count: int
+    in_range_count: int
+    in_range_rate: float
+    average_delta_from_mid: float | None = None
+    average_delta_rate: float | None = None
+    total_sold_amount: float
+
+
 class OutcomeSummaryResponse(BaseModel):
     total_count: int
     in_range_count: int
@@ -91,6 +102,7 @@ class OutcomeSummaryResponse(BaseModel):
     average_delta_from_mid: float | None = None
     average_delta_rate: float | None = None
     total_sold_amount: float
+    by_category: list[OutcomeCategorySummary]
     recent_outcomes: list[OutcomeSummaryItem]
 
 
